@@ -8,3 +8,13 @@
 "create_account_link" = "Create Account";
 "forgot_password_title" = "Forgot Password";
 "create_account_title" = "Create Account";
+"full_name_placeholder" = "Full Name";
+"confirm_password_placeholder" = "Confirm Password";
+"accept_terms_label" = "I accept the terms";
+"data_consent_label" = "Consent to data usage";
+"invalid_full_name" = "Please enter your full name.";
+"passwords_do_not_match" = "Passwords do not match.";
+"must_accept_terms" = "You must accept the terms.";
+"must_consent_data" = "You must consent to data usage.";
+"create_account_button" = "Create Account";
+"account_created_message" = "Account created successfully.";
