@@ -4,3 +4,7 @@
 "login_button" = "Ingresar";
 "invalid_email" = "Correo electrónico no válido.";
 "invalid_password" = "La contraseña debe tener al menos 6 caracteres.";
+"forgot_password_link" = "Olvidaste tu contraseña";
+"create_account_link" = "Crear cuenta";
+"forgot_password_title" = "Olvidaste tu contraseña";
+"create_account_title" = "Crear cuenta";
