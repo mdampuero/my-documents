@@ -14,13 +14,14 @@ struct LoginView: View {
     @State private var passwordError: String?
 
     var body: some View {
-        VStack(spacing: 16) {
-            Text("login_title")
-                .font(.title)
-            TextField("email_placeholder", text: $email)
-                .autocapitalization(.none)
-                .keyboardType(.emailAddress)
-                .textFieldStyle(.roundedBorder)
+        NavigationStack {
+            VStack(spacing: 16) {
+                Text("login_title")
+                    .font(.title)
+                TextField("email_placeholder", text: $email)
+                    .autocapitalization(.none)
+                    .keyboardType(.emailAddress)
+                    .textFieldStyle(.roundedBorder)
             if let emailError = emailError {
                 Text(emailError)
                     .foregroundColor(.red)
@@ -33,12 +34,21 @@ struct LoginView: View {
                     .foregroundColor(.red)
                     .font(.caption)
             }
-            Button("login_button") {
-                validate()
+                Button("login_button") {
+                    validate()
+                }
+                .buttonStyle(.borderedProminent)
+                .frame(maxWidth: .infinity)
+
+                NavigationLink("forgot_password_link") {
+                    ForgotPasswordView()
+                }
+                NavigationLink("create_account_link") {
+                    CreateAccountView()
+                }
             }
-            .buttonStyle(.borderedProminent)
+            .padding()
         }
-        .padding()
     }
 
     private func validate() {
