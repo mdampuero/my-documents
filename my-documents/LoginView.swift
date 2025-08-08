@@ -21,31 +21,43 @@ struct LoginView: View {
                 TextField("email_placeholder", text: $email)
                     .autocapitalization(.none)
                     .keyboardType(.emailAddress)
-                    .textFieldStyle(.roundedBorder)
+                    .padding()
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.gray.opacity(0.5))
+                    )
             if let emailError = emailError {
                 Text(emailError)
                     .foregroundColor(.red)
                     .font(.caption)
             }
             SecureField("password_placeholder", text: $password)
-                .textFieldStyle(.roundedBorder)
+                .padding()
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.gray.opacity(0.5))
+                )
             if let passwordError = passwordError {
                 Text(passwordError)
                     .foregroundColor(.red)
                     .font(.caption)
             }
+                HStack {
+                    NavigationLink("forgot_password_link") {
+                        ForgotPasswordView()
+                    }
+                    Spacer()
+                    NavigationLink("create_account_link") {
+                        CreateAccountView()
+                    }
+                }
+
                 Button("login_button") {
                     validate()
                 }
-                .buttonStyle(.borderedProminent)
+                .padding()
                 .frame(maxWidth: .infinity)
-
-                NavigationLink("forgot_password_link") {
-                    ForgotPasswordView()
-                }
-                NavigationLink("create_account_link") {
-                    CreateAccountView()
-                }
+                .buttonStyle(.borderedProminent)
             }
             .padding()
         }
