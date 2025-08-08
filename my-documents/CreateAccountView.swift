@@ -17,82 +17,61 @@ struct CreateAccountView: View {
     @State private var dataConsentError: String?
 
     @State private var showAlert: Bool = false
+    @State private var toasts: [ToastMessage] = []
 
     var body: some View {
-        VStack(spacing: 16) {
-            TextField("full_name_placeholder", text: $fullName)
-                .autocapitalization(.words)
+        ZStack {
+            VStack(spacing: 16) {
+                TextField("full_name_placeholder", text: $fullName)
+                    .autocapitalization(.words)
+                    .padding()
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(fullNameError == nil ? Color.gray.opacity(0.5) : Color.red)
+                    )
+
+                TextField("email_placeholder", text: $email)
+                    .autocapitalization(.none)
+                    .keyboardType(.emailAddress)
+                    .padding()
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(emailError == nil ? Color.gray.opacity(0.5) : Color.red)
+                    )
+
+                SecureField("password_placeholder", text: $password)
+                    .padding()
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(passwordError == nil ? Color.gray.opacity(0.5) : Color.red)
+                    )
+
+                SecureField("confirm_password_placeholder", text: $confirmPassword)
+                    .padding()
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(confirmPasswordError == nil ? Color.gray.opacity(0.5) : Color.red)
+                    )
+
+                Toggle("accept_terms_label", isOn: $acceptTerms)
+                    .tint(termsError == nil ? .accentColor : .red)
+
+                Toggle("data_consent_label", isOn: $dataConsent)
+                    .tint(dataConsentError == nil ? .accentColor : .red)
+
+                Button("create_account_button") {
+                    validate()
+                }
                 .padding()
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.gray.opacity(0.5))
-                )
-            if let fullNameError = fullNameError {
-                Text(fullNameError)
-                    .foregroundColor(.red)
-                    .font(.caption)
-            }
-
-            TextField("email_placeholder", text: $email)
-                .autocapitalization(.none)
-                .keyboardType(.emailAddress)
-                .padding()
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.gray.opacity(0.5))
-                )
-            if let emailError = emailError {
-                Text(emailError)
-                    .foregroundColor(.red)
-                    .font(.caption)
-            }
-
-            SecureField("password_placeholder", text: $password)
-                .padding()
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.gray.opacity(0.5))
-                )
-            if let passwordError = passwordError {
-                Text(passwordError)
-                    .foregroundColor(.red)
-                    .font(.caption)
-            }
-
-            SecureField("confirm_password_placeholder", text: $confirmPassword)
-                .padding()
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.gray.opacity(0.5))
-                )
-            if let confirmPasswordError = confirmPasswordError {
-                Text(confirmPasswordError)
-                    .foregroundColor(.red)
-                    .font(.caption)
-            }
-
-            Toggle("accept_terms_label", isOn: $acceptTerms)
-            if let termsError = termsError {
-                Text(termsError)
-                    .foregroundColor(.red)
-                    .font(.caption)
-            }
-
-            Toggle("data_consent_label", isOn: $dataConsent)
-            if let dataConsentError = dataConsentError {
-                Text(dataConsentError)
-                    .foregroundColor(.red)
-                    .font(.caption)
-            }
-
-            Button("create_account_button") {
-                validate()
+                .frame(maxWidth: .infinity)
+                .buttonStyle(.borderedProminent)
             }
             .padding()
-            .frame(maxWidth: .infinity)
-            .buttonStyle(.borderedProminent)
+
+            ToastStack(messages: toasts)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
-        .padding()
+        .ignoresSafeArea(edges: .top)
         .navigationTitle("create_account_title")
         .alert("account_created_message", isPresented: $showAlert) {
             Button("OK") {
@@ -102,12 +81,31 @@ struct CreateAccountView: View {
     }
 
     private func validate() {
+        toasts = []
         fullNameError = fullName.isEmpty ? NSLocalizedString("invalid_full_name", comment: "") : nil
+        if let fullNameError = fullNameError {
+            toasts.append(ToastMessage(text: fullNameError))
+        }
         emailError = isValidEmail(email) ? nil : NSLocalizedString("invalid_email", comment: "")
+        if let emailError = emailError {
+            toasts.append(ToastMessage(text: emailError))
+        }
         passwordError = password.count >= 6 ? nil : NSLocalizedString("invalid_password", comment: "")
+        if let passwordError = passwordError {
+            toasts.append(ToastMessage(text: passwordError))
+        }
         confirmPasswordError = (confirmPassword == password) ? nil : NSLocalizedString("passwords_do_not_match", comment: "")
+        if let confirmPasswordError = confirmPasswordError {
+            toasts.append(ToastMessage(text: confirmPasswordError))
+        }
         termsError = acceptTerms ? nil : NSLocalizedString("must_accept_terms", comment: "")
+        if let termsError = termsError {
+            toasts.append(ToastMessage(text: termsError))
+        }
         dataConsentError = dataConsent ? nil : NSLocalizedString("must_consent_data", comment: "")
+        if let dataConsentError = dataConsentError {
+            toasts.append(ToastMessage(text: dataConsentError))
+        }
 
         if fullNameError == nil &&
             emailError == nil &&

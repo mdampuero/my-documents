@@ -12,60 +12,63 @@ struct LoginView: View {
     @State private var password: String = ""
     @State private var emailError: String?
     @State private var passwordError: String?
+    @State private var toasts: [ToastMessage] = []
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 16) {
-                Text("login_title")
-                    .font(.title)
-                TextField("email_placeholder", text: $email)
-                    .autocapitalization(.none)
-                    .keyboardType(.emailAddress)
-                    .padding()
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.gray.opacity(0.5))
-                    )
-            if let emailError = emailError {
-                Text(emailError)
-                    .foregroundColor(.red)
-                    .font(.caption)
-            }
-            SecureField("password_placeholder", text: $password)
-                .padding()
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.gray.opacity(0.5))
-                )
-            if let passwordError = passwordError {
-                Text(passwordError)
-                    .foregroundColor(.red)
-                    .font(.caption)
-            }
-                HStack {
-                    NavigationLink("forgot_password_link") {
-                        ForgotPasswordView()
+            ZStack {
+                VStack(spacing: 16) {
+                    Text("login_title")
+                        .font(.title)
+                    TextField("email_placeholder", text: $email)
+                        .autocapitalization(.none)
+                        .keyboardType(.emailAddress)
+                        .padding()
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(emailError == nil ? Color.gray.opacity(0.5) : Color.red)
+                        )
+                    SecureField("password_placeholder", text: $password)
+                        .padding()
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(passwordError == nil ? Color.gray.opacity(0.5) : Color.red)
+                        )
+                    HStack {
+                        NavigationLink("forgot_password_link") {
+                            ForgotPasswordView()
+                        }
+                        Spacer()
+                        NavigationLink("create_account_link") {
+                            CreateAccountView()
+                        }
                     }
-                    Spacer()
-                    NavigationLink("create_account_link") {
-                        CreateAccountView()
-                    }
-                }
 
-                Button("login_button") {
-                    validate()
+                    Button("login_button") {
+                        validate()
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .buttonStyle(.borderedProminent)
                 }
                 .padding()
-                .frame(maxWidth: .infinity)
-                .buttonStyle(.borderedProminent)
+                ToastStack(messages: toasts)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             }
-            .padding()
+            .ignoresSafeArea(edges: .top)
         }
     }
 
     private func validate() {
+        toasts = []
         emailError = isValidEmail(email) ? nil : NSLocalizedString("invalid_email", comment: "")
+        if let emailError = emailError {
+            toasts.append(ToastMessage(text: emailError))
+        }
         passwordError = password.count >= 6 ? nil : NSLocalizedString("invalid_password", comment: "")
+        if let passwordError = passwordError {
+            toasts.append(ToastMessage(text: passwordError))
+        }
         if emailError == nil && passwordError == nil {
             // Authentication logic would go here
         }
