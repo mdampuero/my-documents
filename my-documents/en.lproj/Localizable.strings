@@ -1,0 +1,6 @@
+"login_title" = "Sign In";
+"email_placeholder" = "Email";
+"password_placeholder" = "Password";
+"login_button" = "Sign In";
+"invalid_email" = "Invalid email address.";
+"invalid_password" = "Password must be at least 6 characters.";

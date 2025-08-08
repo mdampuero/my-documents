@@ -1,0 +1,6 @@
+"login_title" = "Iniciar sesión";
+"email_placeholder" = "Correo electrónico";
+"password_placeholder" = "Contraseña";
+"login_button" = "Ingresar";
+"invalid_email" = "Correo electrónico no válido.";
+"invalid_password" = "La contraseña debe tener al menos 6 caracteres.";
