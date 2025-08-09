@@ -16,6 +16,9 @@ struct CreateAccountView: View {
     @State private var termsError: String?
     @State private var dataConsentError: String?
 
+    @State private var showPassword: Bool = false
+    @State private var showConfirmPassword: Bool = false
+
     @State private var showAlert: Bool = false
 
     var body: some View {
@@ -47,24 +50,46 @@ struct CreateAccountView: View {
                     .font(.caption)
             }
 
-            SecureField("password_placeholder", text: $password)
-                .padding()
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.gray.opacity(0.5))
-                )
+            HStack {
+                if showPassword {
+                    TextField("password_placeholder", text: $password)
+                        .autocapitalization(.none)
+                } else {
+                    SecureField("password_placeholder", text: $password)
+                }
+                Button(action: { showPassword.toggle() }) {
+                    Image(systemName: showPassword ? "eye.slash" : "eye")
+                        .foregroundColor(.gray)
+                }
+            }
+            .padding()
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.gray.opacity(0.5))
+            )
             if let passwordError = passwordError {
                 Text(passwordError)
                     .foregroundColor(.red)
                     .font(.caption)
             }
 
-            SecureField("confirm_password_placeholder", text: $confirmPassword)
-                .padding()
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.gray.opacity(0.5))
-                )
+            HStack {
+                if showConfirmPassword {
+                    TextField("confirm_password_placeholder", text: $confirmPassword)
+                        .autocapitalization(.none)
+                } else {
+                    SecureField("confirm_password_placeholder", text: $confirmPassword)
+                }
+                Button(action: { showConfirmPassword.toggle() }) {
+                    Image(systemName: showConfirmPassword ? "eye.slash" : "eye")
+                        .foregroundColor(.gray)
+                }
+            }
+            .padding()
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.gray.opacity(0.5))
+            )
             if let confirmPasswordError = confirmPasswordError {
                 Text(confirmPasswordError)
                     .foregroundColor(.red)

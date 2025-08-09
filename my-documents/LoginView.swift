@@ -12,6 +12,7 @@ struct LoginView: View {
     @State private var password: String = ""
     @State private var emailError: String?
     @State private var passwordError: String?
+    @State private var showPassword: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -31,12 +32,23 @@ struct LoginView: View {
                     .foregroundColor(.red)
                     .font(.caption)
             }
-            SecureField("password_placeholder", text: $password)
-                .padding()
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.gray.opacity(0.5))
-                )
+            HStack {
+                if showPassword {
+                    TextField("password_placeholder", text: $password)
+                        .autocapitalization(.none)
+                } else {
+                    SecureField("password_placeholder", text: $password)
+                }
+                Button(action: { showPassword.toggle() }) {
+                    Image(systemName: showPassword ? "eye.slash" : "eye")
+                        .foregroundColor(.gray)
+                }
+            }
+            .padding()
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.gray.opacity(0.5))
+            )
             if let passwordError = passwordError {
                 Text(passwordError)
                     .foregroundColor(.red)
