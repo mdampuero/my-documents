@@ -16,44 +16,51 @@ struct LoginView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 16) {
                 Text("login_title")
                     .font(.title)
-                TextField("email_placeholder", text: $email)
-                    .autocapitalization(.none)
-                    .keyboardType(.emailAddress)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    TextField("email_placeholder", text: $email)
+                        .autocapitalization(.none)
+                        .keyboardType(.emailAddress)
+                        .padding()
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.gray.opacity(0.5))
+                        )
+                    if let emailError = emailError {
+                        Text(emailError)
+                            .foregroundColor(.red)
+                            .font(.caption)
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        if showPassword {
+                            TextField("password_placeholder", text: $password)
+                                .autocapitalization(.none)
+                        } else {
+                            SecureField("password_placeholder", text: $password)
+                        }
+                        Button(action: { showPassword.toggle() }) {
+                            Image(systemName: showPassword ? "eye.slash" : "eye")
+                                .foregroundColor(.gray)
+                        }
+                    }
                     .padding()
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(Color.gray.opacity(0.5))
                     )
-            if let emailError = emailError {
-                Text(emailError)
-                    .foregroundColor(.red)
-                    .font(.caption)
-            }
-            HStack {
-                if showPassword {
-                    TextField("password_placeholder", text: $password)
-                        .autocapitalization(.none)
-                } else {
-                    SecureField("password_placeholder", text: $password)
+                    if let passwordError = passwordError {
+                        Text(passwordError)
+                            .foregroundColor(.red)
+                            .font(.caption)
+                    }
                 }
-                Button(action: { showPassword.toggle() }) {
-                    Image(systemName: showPassword ? "eye.slash" : "eye")
-                        .foregroundColor(.gray)
-                }
-            }
-            .padding()
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.gray.opacity(0.5))
-            )
-            if let passwordError = passwordError {
-                Text(passwordError)
-                    .foregroundColor(.red)
-                    .font(.caption)
-            }
+
                 HStack {
                     NavigationLink("forgot_password_link") {
                         ForgotPasswordView()
