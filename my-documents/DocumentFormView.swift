@@ -14,6 +14,10 @@ struct DocumentFormView: View {
     @State private var showAddOptions: Bool = false
     @State private var showImagePicker: Bool = false
     @State private var imageSource: UIImagePickerController.SourceType = .photoLibrary
+    @State private var selectedFileURL: URL?
+    @State private var selectedFileIsImage: Bool = false
+    @State private var selectedFileLabel: String = ""
+    @State private var showAttachmentPreview: Bool = false
 
     var document: Document?
     var onSave: (Document) -> Void
@@ -45,33 +49,23 @@ struct DocumentFormView: View {
                     }
                 }
                 Section {
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 80))]) {
-                        ForEach(attachments) { file in
-                            ZStack(alignment: .topTrailing) {
-                                if file.isImage, let image = UIImage(contentsOfFile: file.url.path) {
-                                    Image(uiImage: image)
-                                        .resizable()
-                                        .scaledToFill()
-                                        .frame(width: 80, height: 80)
-                                        .clipped()
-                                } else {
-                                    Image(systemName: iconName(for: file.url))
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 40, height: 40)
-                                        .frame(width: 80, height: 80)
+                    ForEach(attachments) { file in
+                        HStack {
+                            Image(systemName: iconName(for: file.url))
+                                .frame(width: 24)
+                            VStack(alignment: .leading) {
+                                Text(file.label)
+                                Text(dateFormatter.string(from: file.date))
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                            }
+                            Spacer()
+                            Button(role: .destructive) {
+                                if let index = attachments.firstIndex(of: file) {
+                                    attachments.remove(at: index)
                                 }
-                                Button {
-                                    if let index = attachments.firstIndex(of: file) {
-                                        attachments.remove(at: index)
-                                    }
-                                } label: {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .foregroundColor(.white)
-                                        .background(Color.black.opacity(0.6))
-                                        .clipShape(Circle())
-                                }
-                                .offset(x: -4, y: 4)
+                            } label: {
+                                Image(systemName: "trash")
                             }
                         }
                     }
@@ -112,13 +106,14 @@ struct DocumentFormView: View {
             .alert("Documento guardado", isPresented: $showAlert) {
                 Button("OK") { dismiss() }
             }
-            .fileImporter(isPresented: $showFileImporter, allowedContentTypes: [.image, .pdf, .plainText, .data], allowsMultipleSelection: true) { result in
+            .fileImporter(isPresented: $showFileImporter, allowedContentTypes: [.image, .pdf, .plainText, .data]) { result in
                 switch result {
-                case .success(let urls):
-                    for url in urls {
-                        let isImage = (try? url.resourceValues(forKeys: [.contentTypeKey]).contentType?.conforms(to: .image)) ?? false
-                        attachments.append(Attachment(url: url, isImage: isImage))
-                    }
+                case .success(let url):
+                    let isImage = (try? url.resourceValues(forKeys: [.contentTypeKey]).contentType?.conforms(to: .image)) ?? false
+                    selectedFileURL = url
+                    selectedFileIsImage = isImage
+                    selectedFileLabel = url.lastPathComponent
+                    showAttachmentPreview = true
                 case .failure(let error):
                     print("File import failed: \(error)")
                 }
@@ -145,7 +140,19 @@ struct DocumentFormView: View {
                         let filename = UUID().uuidString + ".jpg"
                         let url = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
                         try? data.write(to: url)
-                        attachments.append(Attachment(url: url, isImage: true))
+                        selectedFileURL = url
+                        selectedFileIsImage = true
+                        selectedFileLabel = url.lastPathComponent
+                        showAttachmentPreview = true
+                    }
+                }
+            }
+            .sheet(isPresented: $showAttachmentPreview) {
+                if let url = selectedFileURL {
+                    AttachmentPreviewView(url: url, isImage: selectedFileIsImage, initialLabel: selectedFileLabel) { label in
+                        let attrs = try? FileManager.default.attributesOfItem(atPath: url.path)
+                        let date = attrs?[.creationDate] as? Date ?? Date()
+                        attachments.append(Attachment(url: url, isImage: selectedFileIsImage, label: label, date: date))
                     }
                 }
             }
@@ -163,6 +170,13 @@ struct DocumentFormView: View {
         default:
             return "doc"
         }
+    }
+
+    private var dateFormatter: DateFormatter {
+        let df = DateFormatter()
+        df.dateStyle = .short
+        df.timeStyle = .short
+        return df
     }
 }
 
