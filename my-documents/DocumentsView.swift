@@ -1,0 +1,82 @@
+import SwiftUI
+
+struct DocumentsView: View {
+    @State private var documents: [Document] = [
+        Document(name: "Contrato", type: "PDF", description: "Contrato de alquiler"),
+        Document(name: "Factura", type: "DOC", description: "Factura enero")
+    ]
+    @State private var showingForm = false
+    @State private var documentToEdit: Document?
+    @State private var documentToDelete: Document?
+    @State private var showDeleteConfirmation = false
+
+    var body: some View {
+        NavigationStack {
+            List {
+                ForEach(documents) { doc in
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text(doc.name)
+                                .font(.headline)
+                            Text(dateFormatter.string(from: doc.date))
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                        }
+                        Spacer()
+                        Text(doc.type)
+                            .font(.caption)
+                            .padding(4)
+                            .background(Color.gray.opacity(0.2))
+                            .cornerRadius(8)
+                    }
+                    .swipeActions(edge: .trailing) {
+                        Button("Eliminar", role: .destructive) {
+                            documentToDelete = doc
+                            showDeleteConfirmation = true
+                        }
+                        Button("Editar") {
+                            documentToEdit = doc
+                            showingForm = true
+                        }.tint(.blue)
+                    }
+                }
+            }
+            .navigationTitle("Mis documentos")
+            .toolbar {
+                Button {
+                    documentToEdit = nil
+                    showingForm = true
+                } label: {
+                    Image(systemName: "plus")
+                }
+            }
+            .confirmationDialog("¿Eliminar documento?", isPresented: $showDeleteConfirmation) {
+                Button("Eliminar", role: .destructive) {
+                    if let doc = documentToDelete, let index = documents.firstIndex(of: doc) {
+                        documents.remove(at: index)
+                    }
+                }
+                Button("Cancelar", role: .cancel) { }
+            }
+            .sheet(isPresented: $showingForm) {
+                DocumentFormView(document: documentToEdit) { newDoc in
+                    if let index = documents.firstIndex(where: { $0.id == newDoc.id }) {
+                        documents[index] = newDoc
+                    } else {
+                        documents.append(newDoc)
+                    }
+                }
+            }
+        }
+    }
+
+    private var dateFormatter: DateFormatter {
+        let df = DateFormatter()
+        df.dateStyle = .short
+        return df
+    }
+}
+
+#Preview {
+    DocumentsView()
+}

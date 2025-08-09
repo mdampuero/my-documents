@@ -13,6 +13,7 @@ struct LoginView: View {
     @State private var emailError: String?
     @State private var passwordError: String?
     @State private var showPassword: Bool = false
+    @State private var showMain: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -83,13 +84,16 @@ struct LoginView: View {
             }
             .padding()
         }
+        .fullScreenCover(isPresented: $showMain) {
+            MainTabView()
+        }
     }
 
     private func validate() {
         emailError = isValidEmail(email) ? nil : NSLocalizedString("invalid_email", comment: "")
         passwordError = password.count >= 6 ? nil : NSLocalizedString("invalid_password", comment: "")
         if emailError == nil && passwordError == nil {
-            // Authentication logic would go here
+            showMain = true
         }
     }
 
