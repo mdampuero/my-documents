@@ -14,20 +14,22 @@ struct DocumentsView: View {
         NavigationStack {
             List {
                 ForEach(documents) { doc in
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text(doc.name)
-                                .font(.headline)
-                            Text(dateFormatter.string(from: doc.date))
+                    NavigationLink(destination: DocumentDetailView(document: doc)) {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(doc.name)
+                                    .font(.headline)
+                                Text(dateFormatter.string(from: doc.date))
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                            }
+                            Spacer()
+                            Text(doc.type)
                                 .font(.caption)
-                                .foregroundColor(.gray)
+                                .padding(4)
+                                .background(Color.gray.opacity(0.2))
+                                .cornerRadius(8)
                         }
-                        Spacer()
-                        Text(doc.type)
-                            .font(.caption)
-                            .padding(4)
-                            .background(Color.gray.opacity(0.2))
-                            .cornerRadius(8)
                     }
                     .swipeActions(edge: .trailing) {
                         Button("Eliminar", role: .destructive) {
