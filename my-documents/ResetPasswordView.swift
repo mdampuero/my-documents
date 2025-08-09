@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct ResetPasswordView: View {
     @State private var password: String = ""
@@ -7,7 +8,6 @@ struct ResetPasswordView: View {
     @State private var confirmPasswordError: String?
     @State private var showPassword: Bool = false
     @State private var showConfirmPassword: Bool = false
-    @State private var showAlert: Bool = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -76,14 +76,6 @@ struct ResetPasswordView: View {
         }
         .padding()
         .navigationTitle("reset_password_title")
-        .alert(isPresented: $showAlert) {
-            Alert(
-                title: Text(NSLocalizedString("password_reset_message", comment: "")),
-                dismissButton: .default(Text("OK")) {
-                    navigateToLogin()
-                }
-            )
-        }
     }
 
     private func validate() {
@@ -91,8 +83,26 @@ struct ResetPasswordView: View {
         confirmPasswordError = (confirmPassword == password) ? nil : NSLocalizedString("passwords_do_not_match", comment: "")
 
         if passwordError == nil && confirmPasswordError == nil {
-            showAlert = true
+            showSuccessAlert()
         }
+    }
+
+    private func showSuccessAlert() {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let root = windowScene.windows.first?.rootViewController else {
+            navigateToLogin()
+            return
+        }
+
+        let alert = UIAlertController(
+            title: nil,
+            message: NSLocalizedString("password_reset_message", comment: ""),
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
+            navigateToLogin()
+        })
+        root.present(alert, animated: true)
     }
 
     private func navigateToLogin() {
