@@ -1,6 +1,6 @@
 import Foundation
 
-struct Attachment: Identifiable, Equatable {
+struct Attachment: Identifiable, Equatable, Codable {
     let id: UUID
     var url: URL
     var isImage: Bool
