@@ -74,11 +74,12 @@ struct LoginView: View {
                 Button("login_button") {
                     validate()
                 }
-                .padding(.vertical, 16)
-                .frame(maxWidth: .infinity)
+                .padding(.vertical, 20) // padding interior vertical
+                .padding(.horizontal, 20) // padding interior horizontal
+                .frame(maxWidth: .infinity) // ocupa todo el ancho
                 .buttonStyle(.borderedProminent)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
-                .padding(.top, 16)
+                .padding(.top, 20) // margen exterior superior
             }
             .padding()
         }
