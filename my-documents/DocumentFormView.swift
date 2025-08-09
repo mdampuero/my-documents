@@ -20,6 +20,8 @@ struct DocumentFormView: View {
     @State private var showAttachmentPreview: Bool = false
     @State private var attachmentToDelete: Attachment?
     @State private var nextAttachmentNumber: Int
+    @State private var selectedImage: UIImage?
+    @State private var editingAttachmentID: UUID?
 
     var document: Document?
     var onSave: (Document) -> Void
@@ -68,6 +70,16 @@ struct DocumentFormView: View {
                             } label: {
                                 Image(systemName: "trash")
                             }
+                            .buttonStyle(BorderlessButtonStyle())
+                        }
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            selectedFileURL = file.url
+                            selectedFileIsImage = file.isImage
+                            selectedFileLabel = file.label
+                            selectedImage = file.isImage ? UIImage(contentsOfFile: file.url.path) : nil
+                            editingAttachmentID = file.id
+                            showAttachmentPreview = true
                         }
                     }
                 } header: {
@@ -124,6 +136,8 @@ struct DocumentFormView: View {
                     selectedFileURL = url
                     selectedFileIsImage = isImage
                     selectedFileLabel = defaultAttachmentLabel()
+                    selectedImage = isImage ? UIImage(contentsOfFile: url.path) : nil
+                    editingAttachmentID = nil
                     showAttachmentPreview = true
                 case .failure(let error):
                     print("File import failed: \(error)")
@@ -154,17 +168,27 @@ struct DocumentFormView: View {
                         selectedFileURL = url
                         selectedFileIsImage = true
                         selectedFileLabel = defaultAttachmentLabel()
+                        selectedImage = image
+                        editingAttachmentID = nil
                         showAttachmentPreview = true
                     }
                 }
             }
-            .sheet(isPresented: $showAttachmentPreview) {
+            .sheet(isPresented: $showAttachmentPreview, onDismiss: {
+                selectedImage = nil
+                selectedFileURL = nil
+                editingAttachmentID = nil
+            }) {
                 if let url = selectedFileURL {
-                    AttachmentPreviewView(url: url, isImage: selectedFileIsImage, initialLabel: selectedFileLabel) { label in
-                        let attrs = try? FileManager.default.attributesOfItem(atPath: url.path)
-                        let date = attrs?[.creationDate] as? Date ?? Date()
-                        attachments.append(Attachment(url: url, isImage: selectedFileIsImage, label: label, date: date))
-                        nextAttachmentNumber += 1
+                    AttachmentPreviewView(url: url, isImage: selectedFileIsImage, initialLabel: selectedFileLabel, image: selectedImage) { label in
+                        if let editingID = editingAttachmentID, let index = attachments.firstIndex(where: { $0.id == editingID }) {
+                            attachments[index].label = label
+                        } else {
+                            let attrs = try? FileManager.default.attributesOfItem(atPath: url.path)
+                            let date = attrs?[.creationDate] as? Date ?? Date()
+                            attachments.append(Attachment(url: url, isImage: selectedFileIsImage, label: label, date: date))
+                            nextAttachmentNumber += 1
+                        }
                     }
                 }
             }

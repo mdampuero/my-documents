@@ -5,14 +5,16 @@ struct AttachmentPreviewView: View {
     var url: URL
     var isImage: Bool
     var initialLabel: String
+    var image: UIImage?
     var onSave: (String) -> Void
     @State private var label: String
     @Environment(\.dismiss) private var dismiss
 
-    init(url: URL, isImage: Bool, initialLabel: String, onSave: @escaping (String) -> Void) {
+    init(url: URL, isImage: Bool, initialLabel: String, image: UIImage? = nil, onSave: @escaping (String) -> Void) {
         self.url = url
         self.isImage = isImage
         self.initialLabel = initialLabel
+        self.image = image
         self.onSave = onSave
         _label = State(initialValue: initialLabel)
     }
@@ -20,11 +22,18 @@ struct AttachmentPreviewView: View {
     var body: some View {
         NavigationStack {
             VStack {
-                if isImage, let image = UIImage(contentsOfFile: url.path) {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(maxHeight: 300)
+                if isImage {
+                    if let uiImage = image ?? UIImage(contentsOfFile: url.path) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(maxHeight: 300)
+                    } else {
+                        Image(systemName: "photo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 100, height: 100)
+                    }
                 } else {
                     Image(systemName: iconName(for: url))
                         .resizable()
