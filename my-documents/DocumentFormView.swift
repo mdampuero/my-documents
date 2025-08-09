@@ -11,6 +11,9 @@ struct DocumentFormView: View {
     @State private var showAlert: Bool = false
     @State private var attachments: [Attachment]
     @State private var showFileImporter: Bool = false
+    @State private var showAddOptions: Bool = false
+    @State private var showImagePicker: Bool = false
+    @State private var imageSource: UIImagePickerController.SourceType = .photoLibrary
 
     var document: Document?
     var onSave: (Document) -> Void
@@ -44,34 +47,43 @@ struct DocumentFormView: View {
                 Section {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 80))]) {
                         ForEach(attachments) { file in
-                            if file.isImage, let image = UIImage(contentsOfFile: file.url.path) {
-                                Image(uiImage: image)
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(width: 80, height: 80)
-                                    .clipped()
-                            } else {
-                                Image(systemName: iconName(for: file.url))
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 40, height: 40)
-                                    .frame(width: 80, height: 80)
+                            ZStack(alignment: .topTrailing) {
+                                if file.isImage, let image = UIImage(contentsOfFile: file.url.path) {
+                                    Image(uiImage: image)
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 80, height: 80)
+                                        .clipped()
+                                } else {
+                                    Image(systemName: iconName(for: file.url))
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 40, height: 40)
+                                        .frame(width: 80, height: 80)
+                                }
+                                Button {
+                                    if let index = attachments.firstIndex(of: file) {
+                                        attachments.remove(at: index)
+                                    }
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundColor(.white)
+                                        .background(Color.black.opacity(0.6))
+                                        .clipShape(Circle())
+                                }
+                                .offset(x: -4, y: 4)
                             }
-                        }
-                        Button {
-                            showFileImporter = true
-                        } label: {
-                            VStack {
-                                Image(systemName: "plus")
-                                    .font(.largeTitle)
-                            }
-                            .frame(width: 80, height: 80)
-                            .background(Color.gray.opacity(0.2))
-                            .cornerRadius(8)
                         }
                     }
                 } header: {
                     Text("Archivos")
+                }
+                Section {
+                    Button {
+                        showAddOptions = true
+                    } label: {
+                        Label("Agregar", systemImage: "paperclip")
+                    }
                 }
             }
             .navigationTitle(document == nil ? "Nuevo documento" : "Editar documento")
@@ -111,6 +123,32 @@ struct DocumentFormView: View {
                     print("File import failed: \(error)")
                 }
             }
+            .confirmationDialog("Agregar archivo", isPresented: $showAddOptions, titleVisibility: .visible) {
+                Button("Galería de fotos") {
+                    imageSource = .photoLibrary
+                    showImagePicker = true
+                }
+                if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                    Button("Tomar fotografía") {
+                        imageSource = .camera
+                        showImagePicker = true
+                    }
+                }
+                Button("Seleccionar archivo") {
+                    showFileImporter = true
+                }
+                Button("Cancelar", role: .cancel) {}
+            }
+            .sheet(isPresented: $showImagePicker) {
+                ImagePicker(sourceType: imageSource) { image in
+                    if let data = image.jpegData(compressionQuality: 0.8) {
+                        let filename = UUID().uuidString + ".jpg"
+                        let url = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
+                        try? data.write(to: url)
+                        attachments.append(Attachment(url: url, isImage: true))
+                    }
+                }
+            }
         }
     }
 
@@ -124,6 +162,45 @@ struct DocumentFormView: View {
             return "archivebox"
         default:
             return "doc"
+        }
+    }
+}
+
+struct ImagePicker: UIViewControllerRepresentable {
+    var sourceType: UIImagePickerController.SourceType
+    var onImagePicked: (UIImage) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = sourceType
+        picker.delegate = context.coordinator
+        return picker
+    }
+
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
+        let parent: ImagePicker
+
+        init(_ parent: ImagePicker) {
+            self.parent = parent
+        }
+
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+            if let image = info[.originalImage] as? UIImage {
+                parent.onImagePicked(image)
+            }
+            parent.dismiss()
+        }
+
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.dismiss()
         }
     }
 }
