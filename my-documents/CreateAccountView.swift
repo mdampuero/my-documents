@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CreateAccountView: View {
     @Environment(\.dismiss) private var dismiss
+    @AppStorage("userEmail") private var storedEmail: String = ""
     @State private var fullName: String = ""
     @State private var email: String = ""
     @State private var password: String = ""
@@ -152,6 +153,9 @@ struct CreateAccountView: View {
             confirmPasswordError == nil &&
             termsError == nil &&
             dataConsentError == nil {
+            let user = User(fullName: fullName, email: email, password: password)
+            PersistenceManager.shared.saveUser(user)
+            storedEmail = email
             showAlert = true
         }
     }

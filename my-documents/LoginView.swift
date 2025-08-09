@@ -94,8 +94,14 @@ struct LoginView: View {
         emailError = isValidEmail(email) ? nil : NSLocalizedString("invalid_email", comment: "")
         passwordError = password.count >= 6 ? nil : NSLocalizedString("invalid_password", comment: "")
         if emailError == nil && passwordError == nil {
-            storedEmail = email
-            isLoggedIn = true
+            if let user = PersistenceManager.shared.loadUser(),
+               user.email == email,
+               user.password == password {
+                storedEmail = email
+                isLoggedIn = true
+            } else {
+                passwordError = NSLocalizedString("invalid_credentials", comment: "")
+            }
         }
     }
 
