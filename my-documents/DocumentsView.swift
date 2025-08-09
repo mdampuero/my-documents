@@ -13,18 +13,18 @@ struct DocumentsView: View {
     var body: some View {
         NavigationStack {
             List {
-                ForEach(documents) { doc in
-                    NavigationLink(destination: DocumentDetailView(document: doc)) {
+                ForEach($documents) { $doc in
+                    NavigationLink(destination: DocumentDetailView(document: $doc)) {
                         HStack {
                             VStack(alignment: .leading) {
-                                Text(doc.name)
+                                Text(doc.wrappedValue.name)
                                     .font(.headline)
-                                Text(dateFormatter.string(from: doc.date))
+                                Text(dateFormatter.string(from: doc.wrappedValue.date))
                                     .font(.caption)
                                     .foregroundColor(.gray)
                             }
                             Spacer()
-                            Text(doc.type)
+                            Text(doc.wrappedValue.type)
                                 .font(.caption)
                                 .padding(4)
                                 .background(Color.gray.opacity(0.2))
@@ -33,11 +33,11 @@ struct DocumentsView: View {
                     }
                     .swipeActions(edge: .trailing) {
                         Button("Eliminar", role: .destructive) {
-                            documentToDelete = doc
+                            documentToDelete = doc.wrappedValue
                             showDeleteConfirmation = true
                         }
                         Button("Editar") {
-                            documentToEdit = doc
+                            documentToEdit = doc.wrappedValue
                             showingForm = true
                         }.tint(.blue)
                     }

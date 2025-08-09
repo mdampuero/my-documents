@@ -1,7 +1,8 @@
 import SwiftUI
 
 struct DocumentDetailView: View {
-    var document: Document
+    @Binding var document: Document
+    @State private var showingForm = false
 
     var body: some View {
         Form {
@@ -13,6 +14,18 @@ struct DocumentDetailView: View {
             }
         }
         .navigationTitle(document.name)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Editar") {
+                    showingForm = true
+                }
+            }
+        }
+        .sheet(isPresented: $showingForm) {
+            DocumentFormView(document: document) { updatedDoc in
+                document = updatedDoc
+            }
+        }
     }
 
     private var dateFormatter: DateFormatter {
@@ -23,5 +36,5 @@ struct DocumentDetailView: View {
 }
 
 #Preview {
-    DocumentDetailView(document: Document(name: "Contrato", type: "PDF", description: "Contrato de alquiler"))
+    DocumentDetailView(document: .constant(Document(name: "Contrato", type: "PDF", description: "Contrato de alquiler")))
 }
