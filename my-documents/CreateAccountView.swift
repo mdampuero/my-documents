@@ -22,92 +22,104 @@ struct CreateAccountView: View {
     @State private var showAlert: Bool = false
 
     var body: some View {
-        VStack(spacing: 16) {
-            TextField("full_name_placeholder", text: $fullName)
-                .autocapitalization(.words)
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                TextField("full_name_placeholder", text: $fullName)
+                    .autocapitalization(.words)
+                    .padding()
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.gray.opacity(0.5))
+                    )
+                if let fullNameError = fullNameError {
+                    Text(fullNameError)
+                        .foregroundColor(.red)
+                        .font(.caption)
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                TextField("email_placeholder", text: $email)
+                    .autocapitalization(.none)
+                    .keyboardType(.emailAddress)
+                    .padding()
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.gray.opacity(0.5))
+                    )
+                if let emailError = emailError {
+                    Text(emailError)
+                        .foregroundColor(.red)
+                        .font(.caption)
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    if showPassword {
+                        TextField("password_placeholder", text: $password)
+                            .autocapitalization(.none)
+                    } else {
+                        SecureField("password_placeholder", text: $password)
+                    }
+                    Button(action: { showPassword.toggle() }) {
+                        Image(systemName: showPassword ? "eye.slash" : "eye")
+                            .foregroundColor(.gray)
+                    }
+                }
                 .padding()
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(Color.gray.opacity(0.5))
                 )
-            if let fullNameError = fullNameError {
-                Text(fullNameError)
-                    .foregroundColor(.red)
-                    .font(.caption)
+                if let passwordError = passwordError {
+                    Text(passwordError)
+                        .foregroundColor(.red)
+                        .font(.caption)
+                }
             }
 
-            TextField("email_placeholder", text: $email)
-                .autocapitalization(.none)
-                .keyboardType(.emailAddress)
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    if showConfirmPassword {
+                        TextField("confirm_password_placeholder", text: $confirmPassword)
+                            .autocapitalization(.none)
+                    } else {
+                        SecureField("confirm_password_placeholder", text: $confirmPassword)
+                    }
+                    Button(action: { showConfirmPassword.toggle() }) {
+                        Image(systemName: showConfirmPassword ? "eye.slash" : "eye")
+                            .foregroundColor(.gray)
+                    }
+                }
                 .padding()
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(Color.gray.opacity(0.5))
                 )
-            if let emailError = emailError {
-                Text(emailError)
-                    .foregroundColor(.red)
-                    .font(.caption)
-            }
-
-            HStack {
-                if showPassword {
-                    TextField("password_placeholder", text: $password)
-                        .autocapitalization(.none)
-                } else {
-                    SecureField("password_placeholder", text: $password)
-                }
-                Button(action: { showPassword.toggle() }) {
-                    Image(systemName: showPassword ? "eye.slash" : "eye")
-                        .foregroundColor(.gray)
+                if let confirmPasswordError = confirmPasswordError {
+                    Text(confirmPasswordError)
+                        .foregroundColor(.red)
+                        .font(.caption)
                 }
             }
-            .padding()
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.gray.opacity(0.5))
-            )
-            if let passwordError = passwordError {
-                Text(passwordError)
-                    .foregroundColor(.red)
-                    .font(.caption)
-            }
 
-            HStack {
-                if showConfirmPassword {
-                    TextField("confirm_password_placeholder", text: $confirmPassword)
-                        .autocapitalization(.none)
-                } else {
-                    SecureField("confirm_password_placeholder", text: $confirmPassword)
-                }
-                Button(action: { showConfirmPassword.toggle() }) {
-                    Image(systemName: showConfirmPassword ? "eye.slash" : "eye")
-                        .foregroundColor(.gray)
+            VStack(alignment: .leading, spacing: 4) {
+                Toggle("accept_terms_label", isOn: $acceptTerms)
+                if let termsError = termsError {
+                    Text(termsError)
+                        .foregroundColor(.red)
+                        .font(.caption)
                 }
             }
-            .padding()
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.gray.opacity(0.5))
-            )
-            if let confirmPasswordError = confirmPasswordError {
-                Text(confirmPasswordError)
-                    .foregroundColor(.red)
-                    .font(.caption)
-            }
 
-            Toggle("accept_terms_label", isOn: $acceptTerms)
-            if let termsError = termsError {
-                Text(termsError)
-                    .foregroundColor(.red)
-                    .font(.caption)
-            }
-
-            Toggle("data_consent_label", isOn: $dataConsent)
-            if let dataConsentError = dataConsentError {
-                Text(dataConsentError)
-                    .foregroundColor(.red)
-                    .font(.caption)
+            VStack(alignment: .leading, spacing: 4) {
+                Toggle("data_consent_label", isOn: $dataConsent)
+                if let dataConsentError = dataConsentError {
+                    Text(dataConsentError)
+                        .foregroundColor(.red)
+                        .font(.caption)
+                }
             }
 
             Button("create_account_button") {
