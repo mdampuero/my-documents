@@ -9,9 +9,15 @@ import SwiftUI
 
 @main
 struct my_documentsApp: App {
+    @AppStorage("isLoggedIn") private var isLoggedIn: Bool = false
+
     var body: some Scene {
         WindowGroup {
-            LoginView()
+            if isLoggedIn {
+                MainTabView()
+            } else {
+                LoginView()
+            }
         }
     }
 }

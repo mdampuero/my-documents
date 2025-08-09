@@ -13,8 +13,8 @@ struct DocumentsView: View {
     var body: some View {
         NavigationStack {
             List {
-                ForEach($documents) { $doc in
-                    NavigationLink(destination: DocumentDetailView(document: $doc)) {
+                ForEach($documents) { doc in
+                    NavigationLink(destination: DocumentDetailView(document: doc)) {
                         HStack {
                             VStack(alignment: .leading) {
                                 Text(doc.wrappedValue.name)

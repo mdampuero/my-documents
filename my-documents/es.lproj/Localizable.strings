@@ -29,3 +29,5 @@
 "reset_password_description" = "Ingresa tu nueva contraseña.";
 "reset_password_button" = "Restablecer contraseña";
 "password_reset_message" = "La contraseña ha sido restablecida correctamente.";
+"my_account_title" = "Mi cuenta";
+"logout_button" = "Cerrar sesión";
