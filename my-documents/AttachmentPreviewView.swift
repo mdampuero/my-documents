@@ -24,9 +24,7 @@ struct AttachmentPreviewView: View {
             VStack {
                 if isImage {
                     if let uiImage = image ?? UIImage(contentsOfFile: url.path) {
-                        Image(uiImage: uiImage)
-                            .resizable()
-                            .scaledToFit()
+                        ZoomableImageView(image: uiImage)
                             .frame(maxHeight: 300)
                     } else {
                         Image(systemName: "photo")
@@ -45,7 +43,6 @@ struct AttachmentPreviewView: View {
                     .padding()
                 Spacer()
             }
-            .navigationTitle("Vista previa")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancelar") { dismiss() }
