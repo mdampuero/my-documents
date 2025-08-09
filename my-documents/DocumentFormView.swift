@@ -30,7 +30,11 @@ struct DocumentFormView: View {
                             .font(.caption)
                     }
                     TextField("Tipo", text: $type)
-                    TextField("Descripción", text: $description)
+                    VStack(alignment: .leading) {
+                        Text("Descripción")
+                        TextEditor(text: $description)
+                            .frame(minHeight: 100)
+                    }
                 }
             }
             .navigationTitle(document == nil ? "Nuevo documento" : "Editar documento")
