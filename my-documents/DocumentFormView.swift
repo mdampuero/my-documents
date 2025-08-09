@@ -8,7 +8,6 @@ struct DocumentFormView: View {
     @State private var type: String
     @State private var description: String
     @State private var nameError: Bool = false
-    @State private var showAlert: Bool = false
     @State private var attachments: [Attachment]
     @State private var showFileImporter: Bool = false
     @State private var showAddOptions: Bool = false
@@ -121,13 +120,10 @@ struct DocumentFormView: View {
                                date: document?.date ?? Date(),
                                attachments: attachments)
                             onSave(doc)
-                            showAlert = true
+                            dismiss()
                         }
                     }
                 }
-            }
-            .alert("Documento guardado", isPresented: $showAlert) {
-                Button("OK") { dismiss() }
             }
             .fileImporter(isPresented: $showFileImporter, allowedContentTypes: [.image, .pdf, .plainText, .data]) { result in
                 switch result {

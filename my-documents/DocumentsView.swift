@@ -7,6 +7,7 @@ struct DocumentsView: View {
     @State private var documentToDelete: Document?
     @State private var showDeleteConfirmation = false
     @State private var searchText: String = ""
+    @State private var showToast: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -67,6 +68,7 @@ struct DocumentsView: View {
                     } else {
                         documents.append(newDoc)
                     }
+                    showToast = true
                 }
             }
             .onAppear {
@@ -76,6 +78,7 @@ struct DocumentsView: View {
                 PersistenceManager.shared.saveDocuments(newValue)
             }
         }
+        .toast(message: "Documento guardado", isPresented: $showToast)
     }
 
     private var dateFormatter: DateFormatter {
