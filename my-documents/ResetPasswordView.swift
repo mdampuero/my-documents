@@ -8,6 +8,7 @@ struct ResetPasswordView: View {
     @State private var showPassword: Bool = false
     @State private var showConfirmPassword: Bool = false
     @State private var showAlert: Bool = false
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -76,7 +77,7 @@ struct ResetPasswordView: View {
         .padding()
         .navigationTitle("reset_password_title")
         .alert("password_reset_message", isPresented: $showAlert) {
-            Button("OK") {}
+            Button("OK") { navigateToLogin() }
         }
     }
 
@@ -86,6 +87,16 @@ struct ResetPasswordView: View {
 
         if passwordError == nil && confirmPasswordError == nil {
             showAlert = true
+        }
+    }
+
+    private func navigateToLogin() {
+        dismiss()
+        DispatchQueue.main.async {
+            dismiss()
+            DispatchQueue.main.async {
+                dismiss()
+            }
         }
     }
 }
