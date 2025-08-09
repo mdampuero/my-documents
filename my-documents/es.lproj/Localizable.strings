@@ -18,3 +18,8 @@
 "must_consent_data" = "Debe consentir el uso de datos.";
 "create_account_button" = "Crear cuenta";
 "account_created_message" = "La cuenta se ha creado";
+"forgot_password_description" = "Ingresa tu correo y te enviaremos un código que deberás colocar en la siguiente pantalla.";
+"send_code_button" = "Enviar código";
+"enter_code_description" = "Ingresa el código recibido en tu correo.";
+"validate_code_button" = "Validar código";
+"verify_code_title" = "Código de verificación";
