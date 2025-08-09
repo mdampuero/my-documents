@@ -28,4 +28,4 @@
 "reset_password_title" = "Reset Password";
 "reset_password_description" = "Enter your new password.";
 "reset_password_button" = "Reset Password";
-"password_reset_message" = "Password reset successfully.";
+"password_reset_message" = "Your password has been reset successfully.";

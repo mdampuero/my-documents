@@ -28,4 +28,4 @@
 "reset_password_title" = "Restablecer contraseña";
 "reset_password_description" = "Ingresa tu nueva contraseña.";
 "reset_password_button" = "Restablecer contraseña";
-"password_reset_message" = "Contraseña restablecida correctamente.";
+"password_reset_message" = "La contraseña ha sido restablecida correctamente.";

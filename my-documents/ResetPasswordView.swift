@@ -76,8 +76,13 @@ struct ResetPasswordView: View {
         }
         .padding()
         .navigationTitle("reset_password_title")
-        .alert("password_reset_message", isPresented: $showAlert) {
-            Button("OK") { navigateToLogin() }
+        .alert(isPresented: $showAlert) {
+            Alert(
+                title: Text(NSLocalizedString("password_reset_message", comment: "")),
+                dismissButton: .default(Text("OK")) {
+                    navigateToLogin()
+                }
+            )
         }
     }
 
