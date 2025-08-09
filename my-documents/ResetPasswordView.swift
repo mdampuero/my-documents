@@ -8,7 +8,6 @@ struct ResetPasswordView: View {
     @State private var confirmPasswordError: String?
     @State private var showPassword: Bool = false
     @State private var showConfirmPassword: Bool = false
-    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -106,13 +105,10 @@ struct ResetPasswordView: View {
     }
 
     private func navigateToLogin() {
-        dismiss()
-        DispatchQueue.main.async {
-            dismiss()
-            DispatchQueue.main.async {
-                dismiss()
-            }
-        }
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first else { return }
+        window.rootViewController = UIHostingController(rootView: LoginView())
+        window.makeKeyAndVisible()
     }
 }
 
