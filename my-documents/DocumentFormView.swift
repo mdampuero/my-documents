@@ -1,4 +1,6 @@
 import SwiftUI
+import UniformTypeIdentifiers
+import UIKit
 
 struct DocumentFormView: View {
     @Environment(\.dismiss) private var dismiss
@@ -7,6 +9,8 @@ struct DocumentFormView: View {
     @State private var description: String
     @State private var nameError: Bool = false
     @State private var showAlert: Bool = false
+    @State private var attachments: [Attachment]
+    @State private var showFileImporter: Bool = false
 
     var document: Document?
     var onSave: (Document) -> Void
@@ -16,6 +20,7 @@ struct DocumentFormView: View {
         _name = State(initialValue: document?.name ?? "")
         _type = State(initialValue: document?.type ?? "")
         _description = State(initialValue: document?.description ?? "")
+        _attachments = State(initialValue: document?.attachments ?? [])
         self.onSave = onSave
     }
 
@@ -36,6 +41,38 @@ struct DocumentFormView: View {
                             .frame(minHeight: 100)
                     }
                 }
+                Section {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 80))]) {
+                        ForEach(attachments) { file in
+                            if file.isImage, let image = UIImage(contentsOfFile: file.url.path) {
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 80, height: 80)
+                                    .clipped()
+                            } else {
+                                Image(systemName: iconName(for: file.url))
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 40, height: 40)
+                                    .frame(width: 80, height: 80)
+                            }
+                        }
+                        Button {
+                            showFileImporter = true
+                        } label: {
+                            VStack {
+                                Image(systemName: "plus")
+                                    .font(.largeTitle)
+                            }
+                            .frame(width: 80, height: 80)
+                            .background(Color.gray.opacity(0.2))
+                            .cornerRadius(8)
+                        }
+                    }
+                } header: {
+                    Text("Archivos")
+                }
             }
             .navigationTitle(document == nil ? "Nuevo documento" : "Editar documento")
             .toolbar {
@@ -49,10 +86,11 @@ struct DocumentFormView: View {
                         } else {
                             nameError = false
                             let doc = Document(id: document?.id ?? UUID(),
-                                               name: name,
-                                               type: type,
-                                               description: description,
-                                               date: document?.date ?? Date())
+                                name: name,
+                               type: type,
+                               description: description,
+                               date: document?.date ?? Date(),
+                               attachments: attachments)
                             onSave(doc)
                             showAlert = true
                         }
@@ -62,6 +100,30 @@ struct DocumentFormView: View {
             .alert("Documento guardado", isPresented: $showAlert) {
                 Button("OK") { dismiss() }
             }
+            .fileImporter(isPresented: $showFileImporter, allowedContentTypes: [.image, .pdf, .plainText, .data], allowsMultipleSelection: true) { result in
+                switch result {
+                case .success(let urls):
+                    for url in urls {
+                        let isImage = (try? url.resourceValues(forKeys: [.contentTypeKey]).contentType?.conforms(to: .image)) ?? false
+                        attachments.append(Attachment(url: url, isImage: isImage))
+                    }
+                case .failure(let error):
+                    print("File import failed: \(error)")
+                }
+            }
+        }
+    }
+
+    private func iconName(for url: URL) -> String {
+        switch url.pathExtension.lowercased() {
+        case "pdf":
+            return "doc.richtext"
+        case "txt":
+            return "doc.text"
+        case "zip":
+            return "archivebox"
+        default:
+            return "doc"
         }
     }
 }
