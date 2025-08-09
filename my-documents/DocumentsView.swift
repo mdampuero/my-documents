@@ -9,11 +9,12 @@ struct DocumentsView: View {
     @State private var documentToEdit: Document?
     @State private var documentToDelete: Document?
     @State private var showDeleteConfirmation = false
+    @State private var searchText: String = ""
 
     var body: some View {
         NavigationStack {
             List {
-                ForEach($documents) { doc in
+                ForEach(filteredDocuments) { doc in
                     NavigationLink(destination: DocumentDetailView(document: doc)) {
                         HStack {
                             VStack(alignment: .leading) {
@@ -31,6 +32,7 @@ struct DocumentsView: View {
                                 .cornerRadius(8)
                         }
                     }
+                    .badge(doc.wrappedValue.attachments.count)
                     .swipeActions(edge: .trailing) {
                         Button("Eliminar", role: .destructive) {
                             documentToDelete = doc.wrappedValue
@@ -43,6 +45,7 @@ struct DocumentsView: View {
                     }
                 }
             }
+            .searchable(text: $searchText)
             .navigationTitle("Mis documentos")
             .toolbar {
                 Button {
@@ -76,6 +79,14 @@ struct DocumentsView: View {
         let df = DateFormatter()
         df.dateStyle = .short
         return df
+    }
+
+    private var filteredDocuments: [Binding<Document>] {
+        if searchText.isEmpty {
+            return Array($documents)
+        } else {
+            return $documents.filter { $0.wrappedValue.name.localizedCaseInsensitiveContains(searchText) }
+        }
     }
 }
 
