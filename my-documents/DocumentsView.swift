@@ -1,10 +1,7 @@
 import SwiftUI
 
 struct DocumentsView: View {
-    @State private var documents: [Document] = [
-        Document(name: "Contrato", type: "PDF", description: "Contrato de alquiler"),
-        Document(name: "Factura", type: "DOC", description: "Factura enero")
-    ]
+    @State private var documents: [Document] = []
     @State private var showingForm = false
     @State private var documentToEdit: Document?
     @State private var documentToDelete: Document?
@@ -71,6 +68,12 @@ struct DocumentsView: View {
                         documents.append(newDoc)
                     }
                 }
+            }
+            .onAppear {
+                documents = PersistenceManager.shared.loadDocuments()
+            }
+            .onChange(of: documents) { newValue in
+                PersistenceManager.shared.saveDocuments(newValue)
             }
         }
     }
