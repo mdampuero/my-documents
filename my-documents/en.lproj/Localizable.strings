@@ -31,3 +31,4 @@
 "password_reset_message" = "Your password has been reset successfully.";
 "my_account_title" = "My Account";
 "logout_button" = "Sign Out";
+"invalid_credentials" = "Incorrect email or password.";

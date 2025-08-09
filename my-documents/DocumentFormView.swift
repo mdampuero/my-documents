@@ -186,7 +186,8 @@ struct DocumentFormView: View {
                         } else {
                             let attrs = try? FileManager.default.attributesOfItem(atPath: url.path)
                             let date = attrs?[.creationDate] as? Date ?? Date()
-                            attachments.append(Attachment(url: url, isImage: selectedFileIsImage, label: label, date: date))
+                            let savedURL = PersistenceManager.shared.saveAttachment(from: url) ?? url
+                            attachments.append(Attachment(url: savedURL, isImage: selectedFileIsImage, label: label, date: date))
                             nextAttachmentNumber += 1
                         }
                     }
