@@ -2,6 +2,8 @@ import SwiftUI
 
 struct VerificationCodeView: View {
     @State private var code: [String] = Array(repeating: "", count: 6)
+    @State private var codeError: String?
+    @State private var navigateToReset: Bool = false
     @FocusState private var focusedField: Int?
 
     var body: some View {
@@ -9,14 +11,14 @@ struct VerificationCodeView: View {
             Text("enter_code_description")
                 .font(.body)
 
-            HStack(spacing: 10) {
+            HStack(spacing: 8) {
                 ForEach(0..<6, id: \.self) { index in
                     TextField("", text: $code[index])
                         .keyboardType(.numberPad)
                         .multilineTextAlignment(.center)
-                        .frame(width: 40, height: 40)
+                        .frame(maxWidth: .infinity, minHeight: 56)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 8)
+                            RoundedRectangle(cornerRadius: 12)
                                 .stroke(Color.gray.opacity(0.5))
                         )
                         .focused($focusedField, equals: index)
@@ -36,9 +38,20 @@ struct VerificationCodeView: View {
                         }
                 }
             }
+            .frame(maxWidth: .infinity)
+
+            if let codeError = codeError {
+                Text(codeError)
+                    .foregroundColor(.red)
+                    .font(.caption)
+            }
+
+            NavigationLink(destination: ResetPasswordView(), isActive: $navigateToReset) {
+                EmptyView()
+            }
 
             Button("validate_code_button") {
-                // Validation logic here
+                validate()
             }
             .padding()
             .frame(maxWidth: .infinity)
@@ -51,6 +64,21 @@ struct VerificationCodeView: View {
             focusedField = 0
         }
         .navigationTitle("verify_code_title")
+    }
+
+    private func validate() {
+        let isComplete = code.allSatisfy { $0.count == 1 }
+        guard isComplete else {
+            codeError = NSLocalizedString("incomplete_code_error", comment: "")
+            return
+        }
+        let entered = code.joined()
+        if entered == "123456" {
+            codeError = nil
+            navigateToReset = true
+        } else {
+            codeError = NSLocalizedString("invalid_code_error", comment: "")
+        }
     }
 }
 

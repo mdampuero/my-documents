@@ -23,3 +23,9 @@
 "enter_code_description" = "Enter the code received in your email.";
 "validate_code_button" = "Validate Code";
 "verify_code_title" = "Verification Code";
+"incomplete_code_error" = "Please enter all digits.";
+"invalid_code_error" = "Invalid code.";
+"reset_password_title" = "Reset Password";
+"reset_password_description" = "Enter your new password.";
+"reset_password_button" = "Reset Password";
+"password_reset_message" = "Password reset successfully.";
