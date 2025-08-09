@@ -18,6 +18,8 @@ struct DocumentFormView: View {
     @State private var selectedFileIsImage: Bool = false
     @State private var selectedFileLabel: String = ""
     @State private var showAttachmentPreview: Bool = false
+    @State private var attachmentToDelete: Attachment?
+    @State private var nextAttachmentNumber: Int
 
     var document: Document?
     var onSave: (Document) -> Void
@@ -28,6 +30,7 @@ struct DocumentFormView: View {
         _type = State(initialValue: document?.type ?? "")
         _description = State(initialValue: document?.description ?? "")
         _attachments = State(initialValue: document?.attachments ?? [])
+        _nextAttachmentNumber = State(initialValue: DocumentFormView.nextNumber(for: document?.attachments ?? []))
         self.onSave = onSave
     }
 
@@ -60,10 +63,8 @@ struct DocumentFormView: View {
                                     .foregroundColor(.gray)
                             }
                             Spacer()
-                            Button(role: .destructive) {
-                                if let index = attachments.firstIndex(of: file) {
-                                    attachments.remove(at: index)
-                                }
+                            Button {
+                                attachmentToDelete = file
                             } label: {
                                 Image(systemName: "trash")
                             }
@@ -79,6 +80,16 @@ struct DocumentFormView: View {
                         Label("Agregar", systemImage: "paperclip")
                     }
                 }
+            }
+            .alert(item: $attachmentToDelete) { file in
+                Alert(
+                    title: Text("Eliminar archivo"),
+                    message: Text("¿Deseas eliminar \(file.label)?"),
+                    primaryButton: .destructive(Text("Eliminar")) {
+                        attachments.removeAll { $0.id == file.id }
+                    },
+                    secondaryButton: .cancel()
+                )
             }
             .navigationTitle(document == nil ? "Nuevo documento" : "Editar documento")
             .toolbar {
@@ -112,7 +123,7 @@ struct DocumentFormView: View {
                     let isImage = (try? url.resourceValues(forKeys: [.contentTypeKey]).contentType?.conforms(to: .image)) ?? false
                     selectedFileURL = url
                     selectedFileIsImage = isImage
-                    selectedFileLabel = url.lastPathComponent
+                    selectedFileLabel = defaultAttachmentLabel()
                     showAttachmentPreview = true
                 case .failure(let error):
                     print("File import failed: \(error)")
@@ -142,7 +153,7 @@ struct DocumentFormView: View {
                         try? data.write(to: url)
                         selectedFileURL = url
                         selectedFileIsImage = true
-                        selectedFileLabel = url.lastPathComponent
+                        selectedFileLabel = defaultAttachmentLabel()
                         showAttachmentPreview = true
                     }
                 }
@@ -153,6 +164,7 @@ struct DocumentFormView: View {
                         let attrs = try? FileManager.default.attributesOfItem(atPath: url.path)
                         let date = attrs?[.creationDate] as? Date ?? Date()
                         attachments.append(Attachment(url: url, isImage: selectedFileIsImage, label: label, date: date))
+                        nextAttachmentNumber += 1
                     }
                 }
             }
@@ -177,6 +189,19 @@ struct DocumentFormView: View {
         df.dateStyle = .short
         df.timeStyle = .short
         return df
+    }
+
+    private func defaultAttachmentLabel() -> String {
+        "Archivo \(nextAttachmentNumber)"
+    }
+
+    private static func nextNumber(for attachments: [Attachment]) -> Int {
+        let prefix = "Archivo "
+        let numbers = attachments.compactMap { attachment -> Int? in
+            guard attachment.label.hasPrefix(prefix) else { return nil }
+            return Int(attachment.label.dropFirst(prefix.count))
+        }
+        return (numbers.max() ?? 0) + 1
     }
 }
 
