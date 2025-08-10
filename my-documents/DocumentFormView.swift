@@ -1,6 +1,7 @@
 import SwiftUI
 import UniformTypeIdentifiers
 import UIKit
+import AVFoundation
 
 struct DocumentFormView: View {
     @Environment(\.dismiss) private var dismiss
@@ -12,6 +13,7 @@ struct DocumentFormView: View {
     @State private var showFileImporter: Bool = false
     @State private var showAddOptions: Bool = false
     @State private var showImagePicker: Bool = false
+    @State private var showCameraPermissionAlert: Bool = false
     @State private var imageSource: UIImagePickerController.SourceType = .photoLibrary
     @State private var selectedFileURL: URL?
     @State private var selectedFileIsImage: Bool = false
@@ -146,14 +148,25 @@ struct DocumentFormView: View {
                 }
                 if UIImagePickerController.isSourceTypeAvailable(.camera) {
                     Button("Tomar fotografía") {
-                        imageSource = .camera
-                        showImagePicker = true
+                        solicitarPermisoCamara { autorizado in
+                            if autorizado {
+                                imageSource = .camera
+                                showImagePicker = true
+                            } else {
+                                showCameraPermissionAlert = true
+                            }
+                        }
                     }
                 }
                 Button("Seleccionar archivo") {
                     showFileImporter = true
                 }
                 Button("Cancelar", role: .cancel) {}
+            }
+            .alert("Acceso a la cámara deshabilitado", isPresented: $showCameraPermissionAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text("Por favor habilita el acceso a la cámara en Configuración.")
             }
             .sheet(isPresented: $showImagePicker) {
                 ImagePicker(sourceType: imageSource) { image in
@@ -189,6 +202,21 @@ struct DocumentFormView: View {
                     }
                 }
             }
+        }
+    }
+
+    private func solicitarPermisoCamara(completion: @escaping (Bool) -> Void) {
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .authorized:
+            completion(true)
+        case .notDetermined:
+            AVCaptureDevice.requestAccess(for: .video) { granted in
+                DispatchQueue.main.async {
+                    completion(granted)
+                }
+            }
+        default:
+            completion(false)
         }
     }
 
