@@ -1,10 +1,13 @@
 import SwiftUI
 import UIKit
+import UniformTypeIdentifiers
 
 struct DocumentDetailView: View {
     @Binding var document: Document
     @State private var showingForm = false
     @State private var selectedAttachment: Attachment?
+    @State private var showFileImporter = false
+    @State private var showToast = false
 
     private let columns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
 
@@ -33,7 +36,12 @@ struct DocumentDetailView: View {
         }
         .navigationTitle(document.name)
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItemGroup(placement: .navigationBarTrailing) {
+                Button {
+                    showFileImporter = true
+                } label: {
+                    Image(systemName: "paperclip")
+                }
                 Button("Editar") {
                     showingForm = true
                 }
@@ -51,6 +59,20 @@ struct DocumentDetailView: View {
                 }
             }
         }
+        .fileImporter(isPresented: $showFileImporter, allowedContentTypes: [.image, .pdf, .plainText, .data]) { result in
+            switch result {
+            case .success(let url):
+                let isImage = (try? url.resourceValues(forKeys: [.contentTypeKey]).contentType?.conforms(to: .image)) ?? false
+                if let savedURL = PersistenceManager.shared.saveAttachment(from: url) {
+                    let attachment = Attachment(url: savedURL, isImage: isImage, label: url.lastPathComponent)
+                    document.attachments.append(attachment)
+                    showToast = true
+                }
+            case .failure(let error):
+                print("File import failed: \(error)")
+            }
+        }
+        .toast(message: "Archivo guardado", isPresented: $showToast)
     }
 
     private var dateFormatter: DateFormatter {
