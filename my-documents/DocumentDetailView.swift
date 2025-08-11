@@ -5,7 +5,6 @@ import AVFoundation
 
 struct DocumentDetailView: View {
     @Binding var document: Document
-    @State private var showingForm = false
     @State private var selectedAttachment: Attachment?
     @State private var showFileImporter = false
     @State private var showAddOptions = false
@@ -18,6 +17,9 @@ struct DocumentDetailView: View {
     @State private var showAttachmentPreview = false
     @State private var nextAttachmentNumber: Int
     @State private var selectedImage: UIImage?
+    @State private var isEditingAttachments = false
+    @State private var attachmentToDelete: Attachment?
+    @State private var showDeleteAttachmentConfirmation = false
 
     private let columns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
 
@@ -39,10 +41,24 @@ struct DocumentDetailView: View {
                 if !document.attachments.isEmpty {
                     LazyVGrid(columns: columns, spacing: 12) {
                         ForEach(document.attachments) { attachment in
-                            attachmentView(for: attachment)
-                                .onTapGesture {
-                                    selectedAttachment = attachment
+                            ZStack(alignment: .topTrailing) {
+                                attachmentView(for: attachment)
+                                    .onTapGesture {
+                                        if !isEditingAttachments {
+                                            selectedAttachment = attachment
+                                        }
+                                    }
+                                if isEditingAttachments {
+                                    Button {
+                                        attachmentToDelete = attachment
+                                        showDeleteAttachmentConfirmation = true
+                                    } label: {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundColor(.red)
+                                    }
+                                    .offset(x: 8, y: -8)
                                 }
+                            }
                         }
                     }
                     .padding(.vertical, 4)
@@ -57,15 +73,19 @@ struct DocumentDetailView: View {
         .navigationTitle(document.name)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button("Editar") {
-                    showingForm = true
+                Button(isEditingAttachments ? "Listo" : "Editar") {
+                    isEditingAttachments.toggle()
                 }
             }
         }
-        .sheet(isPresented: $showingForm) {
-            DocumentFormView(document: document) { updatedDoc in
-                document = updatedDoc
+        .confirmationDialog("¿Eliminar archivo?", isPresented: $showDeleteAttachmentConfirmation, presenting: attachmentToDelete, titleVisibility: .visible) { attachment in
+            Button("Eliminar", role: .destructive) {
+                if let index = document.attachments.firstIndex(where: { $0.id == attachment.id }) {
+                    try? FileManager.default.removeItem(at: document.attachments[index].url)
+                    document.attachments.remove(at: index)
+                }
             }
+            Button("Cancelar", role: .cancel) { }
         }
         .sheet(item: $selectedAttachment) { attachment in
             AttachmentPreviewView(url: attachment.url, isImage: attachment.isImage, initialLabel: attachment.label) { label in
