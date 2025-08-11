@@ -6,15 +6,17 @@ struct AttachmentPreviewView: View {
     var isImage: Bool
     var initialLabel: String
     var image: UIImage?
+    var allowEditing: Bool
     var onSave: (String) -> Void
     @State private var label: String
     @Environment(\.dismiss) private var dismiss
 
-    init(url: URL, isImage: Bool, initialLabel: String, image: UIImage? = nil, onSave: @escaping (String) -> Void) {
+    init(url: URL, isImage: Bool, initialLabel: String, image: UIImage? = nil, allowEditing: Bool = true, onSave: @escaping (String) -> Void = { _ in }) {
         self.url = url
         self.isImage = isImage
         self.initialLabel = initialLabel
         self.image = image
+        self.allowEditing = allowEditing
         self.onSave = onSave
         _label = State(initialValue: initialLabel)
     }
@@ -38,19 +40,26 @@ struct AttachmentPreviewView: View {
                         .scaledToFit()
                         .frame(width: 100, height: 100)
                 }
-                TextField("Nombre", text: $label)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .padding()
+                if allowEditing {
+                    TextField("Nombre", text: $label)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .padding()
+                } else {
+                    Text(label)
+                        .padding()
+                }
                 Spacer()
             }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") { dismiss() }
+                    Button(allowEditing ? "Cancelar" : "Cerrar") { dismiss() }
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Guardar") {
-                        onSave(label)
-                        dismiss()
+                if allowEditing {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Guardar") {
+                            onSave(label)
+                            dismiss()
+                        }
                     }
                 }
             }
