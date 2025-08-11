@@ -5,7 +5,7 @@ import AVFoundation
 
 struct DocumentDetailView: View {
     @Binding var document: Document
-    @State private var showingForm = false
+    @State private var isEditing = false
     @State private var selectedAttachment: Attachment?
     @State private var showFileImporter = false
     @State private var showAddOptions = false
@@ -29,9 +29,16 @@ struct DocumentDetailView: View {
     var body: some View {
         Form {
             Section(header: Text("Información")) {
-                Text("Nombre: \(document.name)")
-                Text("Tipo: \(document.type)")
-                Text("Descripción: \(document.description)")
+                TextField("Nombre", text: $document.name)
+                    .disabled(!isEditing)
+                TextField("Tipo", text: $document.type)
+                    .disabled(!isEditing)
+                VStack(alignment: .leading) {
+                    Text("Descripción")
+                    TextEditor(text: $document.description)
+                        .frame(minHeight: 100)
+                        .disabled(!isEditing)
+                }
                 Text("Fecha: \(dateFormatter.string(from: document.date))")
             }
 
@@ -52,23 +59,19 @@ struct DocumentDetailView: View {
                 } label: {
                     Label("Agregar", systemImage: "paperclip")
                 }
+                .disabled(!isEditing)
             }
         }
         .navigationTitle(document.name)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button("Editar") {
-                    showingForm = true
+                Button(isEditing ? "Guardar" : "Editar") {
+                    isEditing.toggle()
                 }
             }
         }
-        .sheet(isPresented: $showingForm) {
-            DocumentFormView(document: document) { updatedDoc in
-                document = updatedDoc
-            }
-        }
         .sheet(item: $selectedAttachment) { attachment in
-            AttachmentPreviewView(url: attachment.url, isImage: attachment.isImage, initialLabel: attachment.label) { label in
+            AttachmentPreviewView(url: attachment.url, isImage: attachment.isImage, initialLabel: attachment.label, allowEditing: isEditing) { label in
                 if let index = document.attachments.firstIndex(where: { $0.id == attachment.id }) {
                     document.attachments[index].label = label
                 }

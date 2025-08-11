@@ -3,7 +3,6 @@ import SwiftUI
 struct DocumentsView: View {
     @State private var documents: [Document] = []
     @State private var showingForm = false
-    @State private var documentToEdit: Document?
     @State private var documentToDelete: Document?
     @State private var showDeleteConfirmation = false
     @State private var searchText: String = ""
@@ -36,10 +35,6 @@ struct DocumentsView: View {
                             documentToDelete = doc.wrappedValue
                             showDeleteConfirmation = true
                         }
-                        Button("Editar") {
-                            documentToEdit = doc.wrappedValue
-                            showingForm = true
-                        }.tint(.blue)
                     }
                 }
             }
@@ -47,7 +42,6 @@ struct DocumentsView: View {
             .navigationTitle("Mis documentos")
             .toolbar {
                 Button {
-                    documentToEdit = nil
                     showingForm = true
                 } label: {
                     Image(systemName: "plus")
@@ -62,12 +56,8 @@ struct DocumentsView: View {
                 Button("Cancelar", role: .cancel) { }
             }
             .sheet(isPresented: $showingForm) {
-                DocumentFormView(document: documentToEdit) { newDoc in
-                    if let index = documents.firstIndex(where: { $0.id == newDoc.id }) {
-                        documents[index] = newDoc
-                    } else {
-                        documents.append(newDoc)
-                    }
+                DocumentFormView(document: nil) { newDoc in
+                    documents.append(newDoc)
                     showToast = true
                 }
             }
