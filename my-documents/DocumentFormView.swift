@@ -38,8 +38,7 @@ struct DocumentFormView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            Form {
+        Form {
                 Section {
                     TextField("Nombre", text: $name)
                     if nameError {
@@ -94,39 +93,36 @@ struct DocumentFormView: View {
                     }
                 }
             }
-            .alert(item: $attachmentToDelete) { file in
-                Alert(
-                    title: Text("Eliminar archivo"),
-                    message: Text("¿Deseas eliminar \(file.label)?"),
-                    primaryButton: .destructive(Text("Eliminar")) {
-                        attachments.removeAll { $0.id == file.id }
-                    },
-                    secondaryButton: .cancel()
-                )
-            }
-            .navigationTitle(document == nil ? "Nuevo documento" : "Editar documento")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Guardar") {
-                        if name.trimmingCharacters(in: .whitespaces).isEmpty {
-                            nameError = true
-                        } else {
-                            nameError = false
-                            let doc = Document(id: document?.id ?? UUID(),
-                                name: name,
-                               type: type,
-                               description: description,
-                               date: document?.date ?? Date(),
-                               attachments: attachments)
-                            onSave(doc)
-                            dismiss()
-                        }
+        .alert(item: $attachmentToDelete) { file in
+            Alert(
+                title: Text("Eliminar archivo"),
+                message: Text("¿Deseas eliminar \(file.label)?"),
+                primaryButton: .destructive(Text("Eliminar")) {
+                    attachments.removeAll { $0.id == file.id }
+                },
+                secondaryButton: .cancel()
+            )
+        }
+        .navigationTitle(document == nil ? "Nuevo documento" : "Editar documento")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Guardar") {
+                    if name.trimmingCharacters(in: .whitespaces).isEmpty {
+                        nameError = true
+                    } else {
+                        nameError = false
+                        let doc = Document(id: document?.id ?? UUID(),
+                            name: name,
+                           type: type,
+                           description: description,
+                           date: document?.date ?? Date(),
+                           attachments: attachments)
+                        onSave(doc)
+                        dismiss()
                     }
                 }
             }
+        }
             .fileImporter(isPresented: $showFileImporter, allowedContentTypes: [.image, .pdf, .plainText, .data]) { result in
                 switch result {
                 case .success(let url):
@@ -183,22 +179,21 @@ struct DocumentFormView: View {
                     }
                 }
             }
-            .sheet(isPresented: $showAttachmentPreview, onDismiss: {
-                selectedImage = nil
-                selectedFileURL = nil
-                editingAttachmentID = nil
-            }) {
-                if let url = selectedFileURL {
-                    AttachmentPreviewView(url: url, isImage: selectedFileIsImage, initialLabel: selectedFileLabel, image: selectedImage) { label in
-                        if let editingID = editingAttachmentID, let index = attachments.firstIndex(where: { $0.id == editingID }) {
-                            attachments[index].label = label
-                        } else {
-                            let attrs = try? FileManager.default.attributesOfItem(atPath: url.path)
-                            let date = attrs?[.creationDate] as? Date ?? Date()
-                            let savedURL = PersistenceManager.shared.saveAttachment(from: url) ?? url
-                            attachments.append(Attachment(url: savedURL, isImage: selectedFileIsImage, label: label, date: date))
-                            nextAttachmentNumber += 1
-                        }
+        .sheet(isPresented: $showAttachmentPreview, onDismiss: {
+            selectedImage = nil
+            selectedFileURL = nil
+            editingAttachmentID = nil
+        }) {
+            if let url = selectedFileURL {
+                AttachmentPreviewView(url: url, isImage: selectedFileIsImage, initialLabel: selectedFileLabel, image: selectedImage) { label in
+                    if let editingID = editingAttachmentID, let index = attachments.firstIndex(where: { $0.id == editingID }) {
+                        attachments[index].label = label
+                    } else {
+                        let attrs = try? FileManager.default.attributesOfItem(atPath: url.path)
+                        let date = attrs?[.creationDate] as? Date ?? Date()
+                        let savedURL = PersistenceManager.shared.saveAttachment(from: url) ?? url
+                        attachments.append(Attachment(url: savedURL, isImage: selectedFileIsImage, label: label, date: date))
+                        nextAttachmentNumber += 1
                     }
                 }
             }
