@@ -23,6 +23,7 @@ struct DocumentDetailView: View {
     @State private var showAttachmentPreview = false
     @State private var nextAttachmentNumber: Int
     @State private var selectedImage: UIImage?
+    @State private var accessedURL: URL?
 
     private let columns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
 
@@ -120,11 +121,16 @@ struct DocumentDetailView: View {
             switch result {
             case .success(let url):
                 let isImage = (try? url.resourceValues(forKeys: [.contentTypeKey]).contentType?.conforms(to: .image)) ?? false
-                selectedFileURL = url
-                selectedFileIsImage = isImage
-                selectedFileLabel = defaultAttachmentLabel()
-                selectedImage = isImage ? UIImage(contentsOfFile: url.path) : nil
-                showAttachmentPreview = true
+                if url.startAccessingSecurityScopedResource() {
+                    accessedURL = url
+                }
+                DispatchQueue.main.async {
+                    selectedFileURL = url
+                    selectedFileIsImage = isImage
+                    selectedFileLabel = defaultAttachmentLabel()
+                    selectedImage = isImage ? UIImage(contentsOfFile: url.path) : nil
+                    showAttachmentPreview = true
+                }
             case .failure(let error):
                 print("File import failed: \(error)")
             }
@@ -188,6 +194,10 @@ struct DocumentDetailView: View {
         .sheet(isPresented: $showAttachmentPreview, onDismiss: {
             selectedFileURL = nil
             selectedImage = nil
+            if let url = accessedURL {
+                url.stopAccessingSecurityScopedResource()
+                accessedURL = nil
+            }
         }) {
             if let url = selectedFileURL {
                 AttachmentPreviewView(url: url, isImage: selectedFileIsImage, initialLabel: selectedFileLabel, image: selectedImage) { label in
@@ -196,6 +206,10 @@ struct DocumentDetailView: View {
                     let savedURL = PersistenceManager.shared.saveAttachment(from: url) ?? url
                     document.attachments.append(Attachment(url: savedURL, isImage: selectedFileIsImage, label: label, date: date))
                     nextAttachmentNumber += 1
+                    if let accessed = accessedURL {
+                        accessed.stopAccessingSecurityScopedResource()
+                        accessedURL = nil
+                    }
                 }
             }
         }
