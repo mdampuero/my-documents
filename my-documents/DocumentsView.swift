@@ -2,7 +2,6 @@ import SwiftUI
 
 struct DocumentsView: View {
     @State private var documents: [Document] = []
-    @State private var showingForm = false
     @State private var documentToDelete: Document?
     @State private var showDeleteConfirmation = false
     @State private var searchText: String = ""
@@ -41,8 +40,11 @@ struct DocumentsView: View {
             .searchable(text: $searchText)
             .navigationTitle("Mis documentos")
             .toolbar {
-                Button {
-                    showingForm = true
+                NavigationLink {
+                    DocumentFormView(document: nil) { newDoc in
+                        documents.append(newDoc)
+                        showToast = true
+                    }
                 } label: {
                     Image(systemName: "plus")
                 }
@@ -54,12 +56,6 @@ struct DocumentsView: View {
                     }
                 }
                 Button("Cancelar", role: .cancel) { }
-            }
-            .sheet(isPresented: $showingForm) {
-                DocumentFormView(document: nil) { newDoc in
-                    documents.append(newDoc)
-                    showToast = true
-                }
             }
             .onAppear {
                 documents = PersistenceManager.shared.loadDocuments()
