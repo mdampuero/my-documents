@@ -5,7 +5,11 @@ import AVFoundation
 
 struct DocumentDetailView: View {
     @Binding var document: Document
+    @Environment(\.dismiss) private var dismiss
+    var onSave: ((Document) -> Void)?
+
     @State private var isEditing = false
+    @State private var nameError = false
     @State private var selectedAttachment: Attachment?
     @State private var attachmentToDelete: Attachment?
     @State private var showFileImporter = false
@@ -19,11 +23,14 @@ struct DocumentDetailView: View {
     @State private var showAttachmentPreview = false
     @State private var nextAttachmentNumber: Int
     @State private var selectedImage: UIImage?
+    @State private var accessedURL: URL?
 
     private let columns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
 
-    init(document: Binding<Document>) {
+    init(document: Binding<Document>, onSave: ((Document) -> Void)? = nil) {
         _document = document
+        self.onSave = onSave
+        _isEditing = State(initialValue: onSave != nil)
         _nextAttachmentNumber = State(initialValue: DocumentDetailView.nextNumber(for: document.wrappedValue.attachments))
     }
 
@@ -32,6 +39,11 @@ struct DocumentDetailView: View {
             Section(header: Text("Información")) {
                 TextField("Nombre", text: $document.name)
                     .disabled(!isEditing)
+                if nameError {
+                    Text("El nombre es obligatorio")
+                        .foregroundColor(.red)
+                        .font(.caption)
+                }
                 TextField("Tipo", text: $document.type)
                     .disabled(!isEditing)
                 VStack(alignment: .leading) {
@@ -77,11 +89,24 @@ struct DocumentDetailView: View {
                 .disabled(!isEditing)
             }
         }
-        .navigationTitle(document.name)
+        .navigationTitle(document.name.isEmpty ? "Documento" : document.name)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(isEditing ? "Guardar" : "Editar") {
-                    isEditing.toggle()
+                    if isEditing {
+                        if document.name.trimmingCharacters(in: .whitespaces).isEmpty {
+                            nameError = true
+                        } else {
+                            nameError = false
+                            onSave?(document)
+                            if onSave != nil {
+                                dismiss()
+                            }
+                            isEditing = false
+                        }
+                    } else {
+                        isEditing = true
+                    }
                 }
             }
         }
@@ -96,11 +121,16 @@ struct DocumentDetailView: View {
             switch result {
             case .success(let url):
                 let isImage = (try? url.resourceValues(forKeys: [.contentTypeKey]).contentType?.conforms(to: .image)) ?? false
-                selectedFileURL = url
-                selectedFileIsImage = isImage
-                selectedFileLabel = defaultAttachmentLabel()
-                selectedImage = isImage ? UIImage(contentsOfFile: url.path) : nil
-                showAttachmentPreview = true
+                if url.startAccessingSecurityScopedResource() {
+                    accessedURL = url
+                }
+                DispatchQueue.main.async {
+                    selectedFileURL = url
+                    selectedFileIsImage = isImage
+                    selectedFileLabel = defaultAttachmentLabel()
+                    selectedImage = isImage ? UIImage(contentsOfFile: url.path) : nil
+                    showAttachmentPreview = true
+                }
             case .failure(let error):
                 print("File import failed: \(error)")
             }
@@ -164,6 +194,10 @@ struct DocumentDetailView: View {
         .sheet(isPresented: $showAttachmentPreview, onDismiss: {
             selectedFileURL = nil
             selectedImage = nil
+            if let url = accessedURL {
+                url.stopAccessingSecurityScopedResource()
+                accessedURL = nil
+            }
         }) {
             if let url = selectedFileURL {
                 AttachmentPreviewView(url: url, isImage: selectedFileIsImage, initialLabel: selectedFileLabel, image: selectedImage) { label in
@@ -172,6 +206,10 @@ struct DocumentDetailView: View {
                     let savedURL = PersistenceManager.shared.saveAttachment(from: url) ?? url
                     document.attachments.append(Attachment(url: savedURL, isImage: selectedFileIsImage, label: label, date: date))
                     nextAttachmentNumber += 1
+                    if let accessed = accessedURL {
+                        accessed.stopAccessingSecurityScopedResource()
+                        accessedURL = nil
+                    }
                 }
             }
         }

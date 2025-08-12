@@ -6,6 +6,8 @@ struct DocumentsView: View {
     @State private var showDeleteConfirmation = false
     @State private var searchText: String = ""
     @State private var showToast: Bool = false
+    @State private var newDocument = Document(name: "", type: "", description: "")
+    @State private var isPresentingNewDocument = false
 
     var body: some View {
         NavigationStack {
@@ -40,15 +42,24 @@ struct DocumentsView: View {
             .searchable(text: $searchText)
             .navigationTitle("Mis documentos")
             .toolbar {
-                NavigationLink {
-                    DocumentFormView(document: nil) { newDoc in
-                        documents.append(newDoc)
-                        showToast = true
-                    }
+                Button {
+                    newDocument = Document(name: "", type: "", description: "")
+                    isPresentingNewDocument = true
                 } label: {
                     Image(systemName: "plus")
                 }
             }
+            .background(
+                NavigationLink(
+                    destination: DocumentDetailView(document: $newDocument, onSave: { newDoc in
+                        documents.append(newDoc)
+                        showToast = true
+                    }),
+                    isActive: $isPresentingNewDocument,
+                    label: { EmptyView() }
+                )
+                .hidden()
+            )
             .confirmationDialog("¿Eliminar documento?", isPresented: $showDeleteConfirmation) {
                 Button("Eliminar", role: .destructive) {
                     if let doc = documentToDelete, let index = documents.firstIndex(of: doc) {
