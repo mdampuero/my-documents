@@ -22,7 +22,7 @@ struct DocumentFormView: View {
     @State private var attachmentToDelete: Attachment?
     @State private var nextAttachmentNumber: Int
     @State private var selectedImage: UIImage?
-    @State private var editingAttachmentID: UUID?
+    @State private var selectedAttachment: Attachment?
 
     var document: Document?
     var onSave: (Document) -> Void
@@ -38,168 +38,158 @@ struct DocumentFormView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    TextField("Nombre", text: $name)
-                    if nameError {
-                        Text("El nombre es obligatorio")
-                            .foregroundColor(.red)
-                            .font(.caption)
+        Form {
+            Section {
+                TextField("Nombre", text: $name)
+                if nameError {
+                    Text("El nombre es obligatorio")
+                        .foregroundColor(.red)
+                        .font(.caption)
+                }
+                TextField("Tipo", text: $type)
+                VStack(alignment: .leading) {
+                    Text("Descripción")
+                    TextEditor(text: $description)
+                        .frame(minHeight: 100)
+                }
+            }
+            Section {
+                ForEach(attachments) { file in
+                    HStack {
+                        Image(systemName: iconName(for: file.url))
+                            .frame(width: 24)
+                        VStack(alignment: .leading) {
+                            Text(file.label)
+                            Text(dateFormatter.string(from: file.date))
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                        }
+                        Spacer()
+                        Button {
+                            attachmentToDelete = file
+                        } label: {
+                            Image(systemName: "trash")
+                        }
+                        .buttonStyle(BorderlessButtonStyle())
                     }
-                    TextField("Tipo", text: $type)
-                    VStack(alignment: .leading) {
-                        Text("Descripción")
-                        TextEditor(text: $description)
-                            .frame(minHeight: 100)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        selectedAttachment = file
                     }
                 }
-                Section {
-                    ForEach(attachments) { file in
-                        HStack {
-                            Image(systemName: iconName(for: file.url))
-                                .frame(width: 24)
-                            VStack(alignment: .leading) {
-                                Text(file.label)
-                                Text(dateFormatter.string(from: file.date))
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                            }
-                            Spacer()
-                            Button {
-                                attachmentToDelete = file
-                            } label: {
-                                Image(systemName: "trash")
-                            }
-                            .buttonStyle(BorderlessButtonStyle())
-                        }
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            selectedFileURL = file.url
-                            selectedFileIsImage = file.isImage
-                            selectedFileLabel = file.label
-                            selectedImage = file.isImage ? UIImage(contentsOfFile: file.url.path) : nil
-                            editingAttachmentID = file.id
-                            showAttachmentPreview = true
-                        }
-                    }
-                } header: {
-                    Text("Archivos")
+            } header: {
+                Text("Archivos")
+            }
+            Section {
+                Button {
+                    showAddOptions = true
+                } label: {
+                    Label("Agregar", systemImage: "paperclip")
                 }
-                Section {
-                    Button {
-                        showAddOptions = true
-                    } label: {
-                        Label("Agregar", systemImage: "paperclip")
+            }
+        }
+        .alert(item: $attachmentToDelete) { file in
+            Alert(
+                title: Text("Eliminar archivo"),
+                message: Text("¿Deseas eliminar \(file.label)?"),
+                primaryButton: .destructive(Text("Eliminar")) {
+                    attachments.removeAll { $0.id == file.id }
+                },
+                secondaryButton: .cancel()
+            )
+        }
+        .navigationTitle(document == nil ? "Nuevo documento" : "Editar documento")
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Guardar") {
+                    if name.trimmingCharacters(in: .whitespaces).isEmpty {
+                        nameError = true
+                    } else {
+                        nameError = false
+                        let doc = Document(id: document?.id ?? UUID(),
+                                           name: name,
+                                           type: type,
+                                           description: description,
+                                           date: document?.date ?? Date(),
+                                           attachments: attachments)
+                        onSave(doc)
+                        dismiss()
                     }
                 }
             }
-            .alert(item: $attachmentToDelete) { file in
-                Alert(
-                    title: Text("Eliminar archivo"),
-                    message: Text("¿Deseas eliminar \(file.label)?"),
-                    primaryButton: .destructive(Text("Eliminar")) {
-                        attachments.removeAll { $0.id == file.id }
-                    },
-                    secondaryButton: .cancel()
-                )
+        }
+        .fileImporter(isPresented: $showFileImporter, allowedContentTypes: [.image, .pdf, .plainText, .data]) { result in
+            switch result {
+            case .success(let url):
+                let isImage = (try? url.resourceValues(forKeys: [.contentTypeKey]).contentType?.conforms(to: .image)) ?? false
+                selectedFileURL = url
+                selectedFileIsImage = isImage
+                selectedFileLabel = defaultAttachmentLabel()
+                selectedImage = isImage ? UIImage(contentsOfFile: url.path) : nil
+                showAttachmentPreview = true
+            case .failure(let error):
+                print("File import failed: \(error)")
             }
-            .navigationTitle(document == nil ? "Nuevo documento" : "Editar documento")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Guardar") {
-                        if name.trimmingCharacters(in: .whitespaces).isEmpty {
-                            nameError = true
+        }
+        .confirmationDialog("Agregar archivo", isPresented: $showAddOptions, titleVisibility: .visible) {
+            Button("Galería de fotos") {
+                imageSource = .photoLibrary
+                showImagePicker = true
+            }
+            if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                Button("Tomar fotografía") {
+                    solicitarPermisoCamara { autorizado in
+                        if autorizado {
+                            imageSource = .camera
+                            showImagePicker = true
                         } else {
-                            nameError = false
-                            let doc = Document(id: document?.id ?? UUID(),
-                                name: name,
-                               type: type,
-                               description: description,
-                               date: document?.date ?? Date(),
-                               attachments: attachments)
-                            onSave(doc)
-                            dismiss()
+                            showCameraPermissionAlert = true
                         }
                     }
                 }
             }
-            .fileImporter(isPresented: $showFileImporter, allowedContentTypes: [.image, .pdf, .plainText, .data]) { result in
-                switch result {
-                case .success(let url):
-                    let isImage = (try? url.resourceValues(forKeys: [.contentTypeKey]).contentType?.conforms(to: .image)) ?? false
+            Button("Seleccionar archivo") {
+                showFileImporter = true
+            }
+            Button("Cancelar", role: .cancel) {}
+        }
+        .alert("Acceso a la cámara deshabilitado", isPresented: $showCameraPermissionAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Por favor habilita el acceso a la cámara en Configuración.")
+        }
+        .sheet(isPresented: $showImagePicker) {
+            ImagePicker(sourceType: imageSource) { image in
+                if let data = image.jpegData(compressionQuality: 0.8) {
+                    let filename = UUID().uuidString + ".jpg"
+                    let url = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
+                    try? data.write(to: url)
                     selectedFileURL = url
-                    selectedFileIsImage = isImage
+                    selectedFileIsImage = true
                     selectedFileLabel = defaultAttachmentLabel()
-                    selectedImage = isImage ? UIImage(contentsOfFile: url.path) : nil
-                    editingAttachmentID = nil
+                    selectedImage = image
                     showAttachmentPreview = true
-                case .failure(let error):
-                    print("File import failed: \(error)")
                 }
             }
-            .confirmationDialog("Agregar archivo", isPresented: $showAddOptions, titleVisibility: .visible) {
-                Button("Galería de fotos") {
-                    imageSource = .photoLibrary
-                    showImagePicker = true
-                }
-                if UIImagePickerController.isSourceTypeAvailable(.camera) {
-                    Button("Tomar fotografía") {
-                        solicitarPermisoCamara { autorizado in
-                            if autorizado {
-                                imageSource = .camera
-                                showImagePicker = true
-                            } else {
-                                showCameraPermissionAlert = true
-                            }
-                        }
-                    }
-                }
-                Button("Seleccionar archivo") {
-                    showFileImporter = true
-                }
-                Button("Cancelar", role: .cancel) {}
-            }
-            .alert("Acceso a la cámara deshabilitado", isPresented: $showCameraPermissionAlert) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text("Por favor habilita el acceso a la cámara en Configuración.")
-            }
-            .sheet(isPresented: $showImagePicker) {
-                ImagePicker(sourceType: imageSource) { image in
-                    if let data = image.jpegData(compressionQuality: 0.8) {
-                        let filename = UUID().uuidString + ".jpg"
-                        let url = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
-                        try? data.write(to: url)
-                        selectedFileURL = url
-                        selectedFileIsImage = true
-                        selectedFileLabel = defaultAttachmentLabel()
-                        selectedImage = image
-                        editingAttachmentID = nil
-                        showAttachmentPreview = true
-                    }
+        }
+        .sheet(isPresented: $showAttachmentPreview, onDismiss: {
+            selectedImage = nil
+            selectedFileURL = nil
+        }) {
+            if let url = selectedFileURL {
+                AttachmentPreviewView(url: url, isImage: selectedFileIsImage, initialLabel: selectedFileLabel, image: selectedImage) { label in
+                    let attrs = try? FileManager.default.attributesOfItem(atPath: url.path)
+                    let date = attrs?[.creationDate] as? Date ?? Date()
+                    let savedURL = PersistenceManager.shared.saveAttachment(from: url) ?? url
+                    attachments.append(Attachment(url: savedURL, isImage: selectedFileIsImage, label: label, date: date))
+                    nextAttachmentNumber += 1
                 }
             }
-            .sheet(isPresented: $showAttachmentPreview, onDismiss: {
-                selectedImage = nil
-                selectedFileURL = nil
-                editingAttachmentID = nil
-            }) {
-                if let url = selectedFileURL {
-                    AttachmentPreviewView(url: url, isImage: selectedFileIsImage, initialLabel: selectedFileLabel, image: selectedImage) { label in
-                        if let editingID = editingAttachmentID, let index = attachments.firstIndex(where: { $0.id == editingID }) {
-                            attachments[index].label = label
-                        } else {
-                            let attrs = try? FileManager.default.attributesOfItem(atPath: url.path)
-                            let date = attrs?[.creationDate] as? Date ?? Date()
-                            let savedURL = PersistenceManager.shared.saveAttachment(from: url) ?? url
-                            attachments.append(Attachment(url: savedURL, isImage: selectedFileIsImage, label: label, date: date))
-                            nextAttachmentNumber += 1
-                        }
-                    }
+        }
+        .sheet(item: $selectedAttachment) { attachment in
+            AttachmentPreviewView(url: attachment.url, isImage: attachment.isImage, initialLabel: attachment.label) { label in
+                if let index = attachments.firstIndex(where: { $0.id == attachment.id }) {
+                    attachments[index].label = label
                 }
             }
         }
