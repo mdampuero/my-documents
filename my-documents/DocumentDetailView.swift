@@ -7,6 +7,7 @@ struct DocumentDetailView: View {
     @Binding var document: Document
     @State private var isEditing = false
     @State private var selectedAttachment: Attachment?
+    @State private var attachmentToDelete: Attachment?
     @State private var showFileImporter = false
     @State private var showAddOptions = false
     @State private var showImagePicker = false
@@ -46,10 +47,24 @@ struct DocumentDetailView: View {
                 if !document.attachments.isEmpty {
                     LazyVGrid(columns: columns, spacing: 12) {
                         ForEach(document.attachments) { attachment in
-                            attachmentView(for: attachment)
-                                .onTapGesture {
-                                    selectedAttachment = attachment
+                            ZStack(alignment: .topTrailing) {
+                                attachmentView(for: attachment)
+                                    .onTapGesture {
+                                        selectedAttachment = attachment
+                                    }
+                                if isEditing {
+                                    Button {
+                                        attachmentToDelete = attachment
+                                    } label: {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundColor(.red)
+                                            .background(Color.white)
+                                            .clipShape(Circle())
+                                    }
+                                    .buttonStyle(.plain)
+                                    .offset(x: 8, y: -8)
                                 }
+                            }
                         }
                     }
                     .padding(.vertical, 4)
@@ -111,6 +126,21 @@ struct DocumentDetailView: View {
                 showFileImporter = true
             }
             Button("Cancelar", role: .cancel) {}
+        }
+        .confirmationDialog("¿Eliminar archivo?", isPresented: Binding(
+            get: { attachmentToDelete != nil },
+            set: { if !$0 { attachmentToDelete = nil } }
+        )) {
+            Button("Eliminar", role: .destructive) {
+                if let attachment = attachmentToDelete,
+                   let index = document.attachments.firstIndex(where: { $0.id == attachment.id }) {
+                    document.attachments.remove(at: index)
+                }
+                attachmentToDelete = nil
+            }
+            Button("Cancelar", role: .cancel) {
+                attachmentToDelete = nil
+            }
         }
         .alert("Acceso a la cámara deshabilitado", isPresented: $showCameraPermissionAlert) {
             Button("OK", role: .cancel) { }
