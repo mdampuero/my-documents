@@ -49,14 +49,17 @@ struct DocumentsView: View {
                     Image(systemName: "plus")
                 }
             }
-            .sheet(isPresented: $isPresentingNewDocument) {
-                NavigationStack {
-                    DocumentDetailView(document: $newDocument, onSave: { newDoc in
+            .background(
+                NavigationLink(
+                    destination: DocumentDetailView(document: $newDocument, onSave: { newDoc in
                         documents.append(newDoc)
                         showToast = true
-                    })
-                }
-            }
+                    }),
+                    isActive: $isPresentingNewDocument,
+                    label: { EmptyView() }
+                )
+                .hidden()
+            )
             .confirmationDialog("¿Eliminar documento?", isPresented: $showDeleteConfirmation) {
                 Button("Eliminar", role: .destructive) {
                     if let doc = documentToDelete, let index = documents.firstIndex(of: doc) {
