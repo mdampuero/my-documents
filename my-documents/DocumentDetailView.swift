@@ -5,7 +5,11 @@ import AVFoundation
 
 struct DocumentDetailView: View {
     @Binding var document: Document
+    @Environment(\.dismiss) private var dismiss
+    var onSave: ((Document) -> Void)?
+
     @State private var isEditing = false
+    @State private var nameError = false
     @State private var selectedAttachment: Attachment?
     @State private var attachmentToDelete: Attachment?
     @State private var showFileImporter = false
@@ -22,8 +26,10 @@ struct DocumentDetailView: View {
 
     private let columns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
 
-    init(document: Binding<Document>) {
+    init(document: Binding<Document>, onSave: ((Document) -> Void)? = nil) {
         _document = document
+        self.onSave = onSave
+        _isEditing = State(initialValue: onSave != nil)
         _nextAttachmentNumber = State(initialValue: DocumentDetailView.nextNumber(for: document.wrappedValue.attachments))
     }
 
@@ -32,6 +38,11 @@ struct DocumentDetailView: View {
             Section(header: Text("Información")) {
                 TextField("Nombre", text: $document.name)
                     .disabled(!isEditing)
+                if nameError {
+                    Text("El nombre es obligatorio")
+                        .foregroundColor(.red)
+                        .font(.caption)
+                }
                 TextField("Tipo", text: $document.type)
                     .disabled(!isEditing)
                 VStack(alignment: .leading) {
@@ -77,11 +88,30 @@ struct DocumentDetailView: View {
                 .disabled(!isEditing)
             }
         }
-        .navigationTitle(document.name)
+        .navigationTitle(onSave == nil ? document.name : "Nuevo documento")
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(isEditing ? "Guardar" : "Editar") {
-                    isEditing.toggle()
+            if onSave == nil {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(isEditing ? "Guardar" : "Editar") {
+                        isEditing.toggle()
+                    }
+                }
+            } else {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancelar") {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Guardar") {
+                        if document.name.trimmingCharacters(in: .whitespaces).isEmpty {
+                            nameError = true
+                        } else {
+                            nameError = false
+                            onSave?(document)
+                            dismiss()
+                        }
+                    }
                 }
             }
         }
