@@ -56,7 +56,7 @@ struct DocumentDetailView: View {
                                     Button {
                                         attachmentToDelete = attachment
                                     } label: {
-                                        Image(systemName: "xmark.circle.fill")
+                                        Image(systemName: "minus.circle")
                                             .foregroundColor(.red)
                                             .background(Color.white)
                                             .clipShape(Circle())
