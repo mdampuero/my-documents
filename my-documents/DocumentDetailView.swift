@@ -88,29 +88,23 @@ struct DocumentDetailView: View {
                 .disabled(!isEditing)
             }
         }
-        .navigationTitle(onSave == nil ? document.name : "Nuevo documento")
+        .navigationTitle(document.name.isEmpty ? "Documento" : document.name)
         .toolbar {
-            if onSave == nil {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(isEditing ? "Guardar" : "Editar") {
-                        isEditing.toggle()
-                    }
-                }
-            } else {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancelar") {
-                        dismiss()
-                    }
-                }
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Guardar") {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(isEditing ? "Guardar" : "Editar") {
+                    if isEditing {
                         if document.name.trimmingCharacters(in: .whitespaces).isEmpty {
                             nameError = true
                         } else {
                             nameError = false
                             onSave?(document)
-                            dismiss()
+                            if onSave != nil {
+                                dismiss()
+                            }
+                            isEditing = false
                         }
+                    } else {
+                        isEditing = true
                     }
                 }
             }
